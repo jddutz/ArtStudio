@@ -1,27 +1,25 @@
+
 # ArtStudio
 
-ArtStudio is a powerful, user-friendly digital art application designed for artists, illustrators, and creative professionals. The tool leverages generative AI to accelerate productivity. It provides a comprehensive set of tools for digital painting, image editing, and creative workflows.
+ArtStudio is an experimental project exploring the combination of generative AI tools with basic user interface and graphics editing features. The goal is to experiment with new creative workflows and technologies, not to replace industry-standard tools or provide a comprehensive, professional-grade experience.
 
-## What Sets ArtStudio Apart?
-- **Truly Free & Open Source:** 100% free to use, distributed under the GNU General Public License (GPL). No subscriptions, no hidden fees, and no copyright restrictions on your creations.
-- **No Bloatware:** Minimal overhead and a lightweight core ensure fast performance and a clutter-free experience.
-- **Modular Design:** Plug-and-play components allow you to add or remove features as needed, keeping your workflow efficient and customizable.
+## Project Goals
+- Experiment with integrating generative AI into simple digital art and graphics editing workflows
+- Provide a minimal, approachable UI for testing ideas and features
+- Encourage learning, prototyping, and community feedback
 
-## Features
-- Digital painting and drawing tools (brushes, pencils, erasers, etc.)
-- Layer management with blending modes
-- Image editing (crop, resize, filters, adjustments)
-- Import/export support for PNG, JPEG, PSD, and more
-- Customizable workspace and tool palettes
-- Touch, stylus, and mouse/keyboard input support
-- Plugin and scripting support for extensibility
-- Local and optional cloud project storage
+## Features (Experimental / In Progress)
+- Basic digital painting and drawing tools
+- Simple layer management
+- Generative AI-powered image suggestions or enhancements
+- Ability to use local and/or cloud-based AI models
+- Basic image editing (crop, resize, simple filters)
+- Minimal import/export support (PNG, JPEG)
 
 ## Technology Stack
-- Platform: Windows (with plans for macOS and Linux)
-- Language: [Specify language, e.g., C#, Python, JavaScript]
-- Frameworks: [Specify frameworks, e.g., Electron, Qt, React]
-- GPU acceleration for high performance
+- Platform: Windows (with possible future support for other platforms)
+- Language: [To be specified]
+- Frameworks: [To be specified]
 
 ## Getting Started
 1. Clone the repository:
@@ -38,17 +36,12 @@ ArtStudio is a powerful, user-friendly digital art application designed for arti
 	```
 
 ## Contributing
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions, ideas, and feedback are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 
 ## License
-[Specify license, e.g., MIT License]
-
-## Roadmap
-- Advanced brush engine
-- Animation support
-- Collaboration features
-- Mobile/tablet versions
+The source code for ArtStudio is distributed under the MIT License. Any outputs, artworks, or generated content produced by the application are distributed under the GNU General Public License (GPL).
 
 ---
 
-*This is a work in progress. Stay tuned for updates!*
+*This is a work in progress and an experimental project. Features and direction may change at any time.*
