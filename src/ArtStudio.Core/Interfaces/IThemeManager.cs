@@ -1,4 +1,4 @@
-namespace ArtStudio.Core.Interfaces;
+namespace ArtStudio.Core;
 
 /// <summary>
 /// Interface for managing application themes
@@ -39,19 +39,4 @@ public interface IThemeManager
     /// Initializes the theme manager with the application
     /// </summary>
     void Initialize(object application);
-}
-
-/// <summary>
-/// Event arguments for theme changes
-/// </summary>
-public class ThemeChangedEventArgs : EventArgs
-{
-    public string PreviousTheme { get; }
-    public string NewTheme { get; }
-
-    public ThemeChangedEventArgs(string previousTheme, string newTheme)
-    {
-        PreviousTheme = previousTheme;
-        NewTheme = newTheme;
-    }
 }

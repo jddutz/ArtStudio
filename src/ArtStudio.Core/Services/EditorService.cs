@@ -1,4 +1,4 @@
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.Core.Services;

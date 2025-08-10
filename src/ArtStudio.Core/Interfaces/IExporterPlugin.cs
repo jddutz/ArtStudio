@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ArtStudio.Core.Interfaces;
+namespace ArtStudio.Core;
 
 /// <summary>
 /// Interface for file export plugins

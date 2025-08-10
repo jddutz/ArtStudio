@@ -1,6 +1,6 @@
 using Xunit;
 using ArtStudio.Core.Services;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 
 namespace ArtStudio.Tests;
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 
 namespace ArtStudio.Core.Services;
 

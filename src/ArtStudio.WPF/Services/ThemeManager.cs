@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using MaterialDesignThemes.Wpf;
 using MaterialDesignColors;
 using Microsoft.Win32;
-using CoreThemeManager = ArtStudio.Core.Interfaces.IThemeManager;
-using CoreThemeChangedEventArgs = ArtStudio.Core.Interfaces.ThemeChangedEventArgs;
+using CoreThemeManager = ArtStudio.Core.IThemeManager;
+using CoreThemeChangedEventArgs = ArtStudio.Core.ThemeChangedEventArgs;
 
 namespace ArtStudio.WPF.Services;
 

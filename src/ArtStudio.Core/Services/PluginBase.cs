@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 
 namespace ArtStudio.Core.Services;
 

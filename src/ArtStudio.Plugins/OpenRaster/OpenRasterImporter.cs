@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using ArtStudio.Core.Services;
 
 namespace ArtStudio.Plugin.OpenRaster;

@@ -1,5 +1,5 @@
 using System.Windows;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using ArtStudio.Core.Services;
 using ArtStudio.WPF.ViewModels;
 using ArtStudio.WPF.Services;

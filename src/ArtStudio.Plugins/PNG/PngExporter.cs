@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using ArtStudio.Core.Services;
 
 namespace ArtStudio.Plugin.PNG;

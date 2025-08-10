@@ -1,4 +1,4 @@
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using ArtStudio.Core.Services;
 
 namespace ArtStudio.SamplePlugin;

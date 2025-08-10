@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.Core.Services;

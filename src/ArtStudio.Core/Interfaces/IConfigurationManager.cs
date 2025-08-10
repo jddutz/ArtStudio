@@ -1,6 +1,6 @@
 using System;
 
-namespace ArtStudio.Core.Interfaces;
+namespace ArtStudio.Core;
 
 /// <summary>
 /// Interface for managing application configuration settings
@@ -50,7 +50,7 @@ public interface IConfigurationManager
     /// <summary>
     /// Gets a configuration value by key
     /// </summary>
-    T GetValue<T>(string key, T defaultValue = default);
+    T GetValue<T>(string key, T? defaultValue = default);
 
     /// <summary>
     /// Sets a configuration value by key
@@ -61,21 +61,4 @@ public interface IConfigurationManager
     /// Gets all available theme names
     /// </summary>
     string[] GetAvailableThemes();
-}
-
-/// <summary>
-/// Event arguments for configuration changes
-/// </summary>
-public class ConfigurationChangedEventArgs : EventArgs
-{
-    public string Key { get; }
-    public object OldValue { get; }
-    public object NewValue { get; }
-
-    public ConfigurationChangedEventArgs(string key, object oldValue, object newValue)
-    {
-        Key = key;
-        OldValue = oldValue;
-        NewValue = newValue;
-    }
 }

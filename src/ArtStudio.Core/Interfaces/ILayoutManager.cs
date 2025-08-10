@@ -1,4 +1,4 @@
-namespace ArtStudio.Core.Interfaces;
+namespace ArtStudio.Core;
 
 public interface ILayoutManager
 {

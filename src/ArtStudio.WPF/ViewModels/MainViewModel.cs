@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.WPF.ViewModels;

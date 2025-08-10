@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 
 namespace ArtStudio.WPF.ViewModels;
 

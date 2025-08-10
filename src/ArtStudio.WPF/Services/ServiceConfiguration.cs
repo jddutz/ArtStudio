@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ArtStudio.Core.Interfaces;
+using ArtStudio.Core;
 using ArtStudio.Core.Services;
 using ArtStudio.WPF.ViewModels;
 using ArtStudio.WPF.Services;
