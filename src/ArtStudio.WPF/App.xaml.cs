@@ -4,11 +4,17 @@ using ArtStudio.Core.Services;
 using ArtStudio.WPF.ViewModels;
 using ArtStudio.WPF.Services;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.WPF;
 
 public partial class App : Application
 {
+    private IServiceProvider? _serviceProvider;
+    private IHost? _host;
+
     public App()
     {
         try
@@ -46,7 +52,7 @@ public partial class App : Application
             Environment.Exit(1);
         }
     }
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         // Initialize logging system first
         LoggingService.Initialize();
@@ -69,41 +75,30 @@ public partial class App : Application
 
         try
         {
-            LoggingService.LogInfo("Initializing services and view models");
+            LoggingService.LogInfo("Setting up dependency injection");
 
-            // Create configuration manager first
-            var configurationManager = new ConfigurationManager();
+            // Create and configure the host
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    services.ConfigureServices();
+                })
+                .Build();
 
-            // Create theme manager and initialize it
-            var themeManager = new ThemeManager(configurationManager);
-            themeManager.Initialize(this);
+            // Start the host
+            await _host.StartAsync();
+            _serviceProvider = _host.Services;
 
-            // Create other services
-            var layoutManager = new LayoutManager();
-            var editorService = new EditorService();
-            var dockingService = new DockingService();
+            LoggingService.LogInfo("Dependency injection configured successfully");
 
-            LoggingService.LogInfo("Services created successfully");
+            // Initialize services
+            await ServiceConfiguration.InitializeServicesAsync(_serviceProvider, this);
 
-            // Create ViewModels
-            var toolPaletteViewModel = new ToolPaletteViewModel();
-            var layerPaletteViewModel = new LayerPaletteViewModel();
-            var editorViewModel = new EditorViewModel();
-            var mainViewModel = new MainViewModel(
-                layoutManager,
-                editorService,
-                null, // logger placeholder - could integrate with LoggingService
-                toolPaletteViewModel,
-                layerPaletteViewModel,
-                editorViewModel,
-                configurationManager,
-                themeManager);
+            LoggingService.LogInfo("Services initialized successfully");
 
-            LoggingService.LogInfo("ViewModels created successfully");
-
-            // Create and show main window
+            // Create and show main window using DI
             LoggingService.LogInfo("Creating main window");
-            var mainWindow = new MainWindow(mainViewModel);
+            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
             LoggingService.LogInfo("Showing main window");
             mainWindow.Show();
@@ -183,6 +178,10 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         LoggingService.LogInfo($"Application exiting with code: {e.ApplicationExitCode}");
+
+        // Dispose of the host
+        _host?.Dispose();
+
         LoggingService.Shutdown();
         base.OnExit(e);
     }
