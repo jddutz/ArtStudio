@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch ArtStudio (Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/ArtStudio.WPF/bin/Debug/net8.0-windows/ArtStudio.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "requireExactSource": false,
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "Launch ArtStudio (Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/ArtStudio.WPF/bin/Release/net8.0-windows/ArtStudio.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "requireExactSource": false,
+            "preLaunchTask": "build-release"
+        },
+        {
+            "name": "Attach to ArtStudio Process",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}

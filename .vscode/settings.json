@@ -1,0 +1,17 @@
+{
+    "dotnet.defaultSolution": "ArtStudio.sln",
+    "omnisharp.enableMsBuildLoadProjectsOnDemand": false,
+    "omnisharp.enableEditorConfigSupport": true,
+    "omnisharp.enableAsyncCompletion": true,
+    "csharp.format.enable": true,
+    "csharp.semanticHighlighting.enabled": true,
+    "editor.formatOnSave": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    },
+    "search.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    }
+}

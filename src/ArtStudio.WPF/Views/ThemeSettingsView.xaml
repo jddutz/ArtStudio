@@ -1,0 +1,89 @@
+<UserControl x:Class="ArtStudio.WPF.Views.ThemeSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+            Padding="16">
+        <StackPanel>
+            <TextBlock Text="Theme Settings"
+                       Style="{StaticResource ArtStudio.HeaderText}"/>
+
+            <!-- System Theme Option -->
+            <GroupBox Header="System Integration"
+                      Style="{StaticResource ArtStudio.ToolGroup}"
+                      Margin="0,16,0,8">
+                <CheckBox Content="Use System Theme"
+                          IsChecked="{Binding UseSystemTheme}"
+                          Margin="8"
+                          ToolTip="Automatically switch between light and dark themes based on system settings"/>
+            </GroupBox>
+
+            <!-- Theme Selection -->
+            <GroupBox Header="Theme Selection"
+                      Style="{StaticResource ArtStudio.ToolGroup}"
+                      Margin="0,8"
+                      IsEnabled="{Binding UseSystemTheme, Converter={StaticResource InverseBooleanConverter}}">
+                <StackPanel Margin="8">
+                    <TextBlock Text="Application Theme:"
+                               Style="{StaticResource ArtStudio.SubheaderText}"/>
+                    <ComboBox ItemsSource="{Binding AvailableThemes}"
+                              SelectedItem="{Binding SelectedTheme}"
+                              Margin="0,4,0,16"/>
+
+                    <TextBlock Text="Material Design Base Theme:"
+                               Style="{StaticResource ArtStudio.SubheaderText}"/>
+                    <ComboBox ItemsSource="{Binding MaterialDesignBaseThemes}"
+                              SelectedItem="{Binding SelectedMaterialDesignBaseTheme}"
+                              Margin="0,4,0,16"/>
+
+                    <TextBlock Text="Primary Color:"
+                               Style="{StaticResource ArtStudio.SubheaderText}"/>
+                    <ComboBox ItemsSource="{Binding PrimaryColors}"
+                              SelectedItem="{Binding SelectedPrimaryColor}"
+                              Margin="0,4,0,16"/>
+
+                    <TextBlock Text="Secondary Color:"
+                               Style="{StaticResource ArtStudio.SubheaderText}"/>
+                    <ComboBox ItemsSource="{Binding SecondaryColors}"
+                              SelectedItem="{Binding SelectedSecondaryColor}"
+                              Margin="0,4"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Preview -->
+            <GroupBox Header="Theme Preview"
+                      Style="{StaticResource ArtStudio.ToolGroup}"
+                      Margin="0,8">
+                <StackPanel Margin="8">
+                    <TextBlock Text="Preview the current theme:"
+                               Style="{StaticResource ArtStudio.SubheaderText}"/>
+
+                    <Border Background="{StaticResource ArtStudio.Surface}"
+                            BorderBrush="{StaticResource ArtStudio.Border}"
+                            BorderThickness="1"
+                            Padding="12"
+                            Margin="0,8">
+                        <StackPanel>
+                            <TextBlock Text="Sample Text"
+                                       Foreground="{StaticResource ArtStudio.OnSurface}"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,8"/>
+
+                            <Button Content="Sample Button"
+                                    Style="{StaticResource ArtStudio.ToolButton}"
+                                    Margin="0,0,0,8"/>
+
+                            <Button Content="Primary Button"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Margin="0,0,0,8"/>
+
+                            <TextBlock Text="This is how the current theme looks."
+                                       Foreground="{StaticResource ArtStudio.OnSurfaceVariant}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,129 @@
+<UserControl x:Class="ArtStudio.WPF.Views.LayerPaletteView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="400"
+        d:DesignWidth="250"
+             Background="{StaticResource ArtStudio.Surface}">
+
+    <materialDesign:Card Style="{StaticResource ArtStudio.PaletteCard}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Text="Layers"
+                    Grid.Row="0"
+                    Style="{StaticResource ArtStudio.HeaderText}"/>
+
+            <!-- Layer Controls -->
+            <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    Margin="0,0,0,8">
+                <Button Style="{StaticResource ArtStudio.IconButton}"
+                        ToolTip="Add Layer">
+                    <materialDesign:PackIcon Kind="Plus"/>
+                </Button>
+                <Button Style="{StaticResource ArtStudio.IconButton}"
+                        ToolTip="Delete Layer"
+                        Margin="4,0,0,0">
+                    <materialDesign:PackIcon Kind="Delete"/>
+                </Button>
+                <Button Style="{StaticResource ArtStudio.IconButton}"
+                        ToolTip="Duplicate Layer"
+                        Margin="4,0,0,0">
+                    <materialDesign:PackIcon Kind="ContentDuplicate"/>
+                </Button>
+                <Button Style="{StaticResource ArtStudio.IconButton}"
+                        ToolTip="Layer Settings"
+                        Margin="4,0,0,0">
+                    <materialDesign:PackIcon Kind="Cog"/>
+                </Button>
+            </StackPanel>
+
+            <!-- Layers List -->
+            <ListBox Grid.Row="2"
+                     Style="{StaticResource ArtStudio.LayerListBox}"
+                     ItemsSource="{Binding Layers}"
+                     SelectedItem="{Binding SelectedLayer}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource ArtStudio.LayerItem}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Visibility Toggle -->
+                                <Button Grid.Column="0"
+                                        Style="{StaticResource ArtStudio.IconButton}"
+                                        Background="Transparent"
+                                        Margin="0,0,8,0">
+                                    <materialDesign:PackIcon>
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind"
+                                                        Value="EyeOff"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsVisible}"
+                                                            Value="True">
+                                                        <Setter Property="Kind"
+                                                                Value="Eye"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </Button>
+
+                                <!-- Layer Name -->
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Name}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource ArtStudio.OnSurface}"
+                                           FontWeight="Medium"/>
+
+                                <!-- Opacity Display -->
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding Opacity, StringFormat={}{0:P0}}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource ArtStudio.OnSurfaceVariant}"
+                                           FontSize="12"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Layer Blend Mode -->
+            <GroupBox Grid.Row="3"
+                    Header="Blend Mode"
+                    Style="{StaticResource ArtStudio.ToolGroup}"
+                    Margin="0,8,0,0">
+                <ComboBox Style="{StaticResource MaterialDesignComboBox}"
+                          materialDesign:HintAssist.Hint="Blend Mode">
+                    <ComboBoxItem Content="Normal"
+                            IsSelected="True"/>
+                    <ComboBoxItem Content="Multiply"/>
+                    <ComboBoxItem Content="Screen"/>
+                    <ComboBoxItem Content="Overlay"/>
+                    <ComboBoxItem Content="Soft Light"/>
+                    <ComboBoxItem Content="Hard Light"/>
+                    <ComboBoxItem Content="Color Dodge"/>
+                    <ComboBoxItem Content="Color Burn"/>
+                    <ComboBoxItem Content="Darken"/>
+                    <ComboBoxItem Content="Lighten"/>
+                </ComboBox>
+            </GroupBox>
+        </Grid>
+    </materialDesign:Card>
+</UserControl>

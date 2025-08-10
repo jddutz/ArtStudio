@@ -1,0 +1,51 @@
+<UserControl x:Class="ArtStudio.WPF.Views.EditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+        d:DesignWidth="800"
+             Background="{StaticResource ArtStudio.Background}">
+
+    <Grid>
+        <!-- Canvas Container -->
+        <Border Style="{StaticResource ArtStudio.CanvasBorder}">
+            <ScrollViewer Name="CanvasScrollViewer"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          Background="{StaticResource ArtStudio.Grid}">
+                <Canvas Name="DrawingCanvas"
+                        Style="{StaticResource ArtStudio.DrawingCanvas}"
+                        Width="800"
+                        Height="600">
+                    <!-- Drawing content will be rendered here -->
+                </Canvas>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Overlay for status information -->
+        <Border Background="#80000000"
+                Visibility="Visible"
+                x:Name="WelcomeOverlay">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <materialDesign:PackIcon Kind="Palette"
+                                         Width="64"
+                        Height="64"
+                                         Foreground="{StaticResource ArtStudio.Primary}"
+                                         Margin="0,0,0,16"/>
+                <TextBlock Text="Welcome to ArtStudio"
+                           Style="{StaticResource MaterialDesignHeadline4TextBlock}"
+                           HorizontalAlignment="Center"
+                           Foreground="White"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="Select a tool and start creating!"
+                           Style="{StaticResource MaterialDesignBody1TextBlock}"
+                           HorizontalAlignment="Center"
+                           Foreground="LightGray"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Light Theme Colors -->
+    <SolidColorBrush x:Key="ArtStudio.Background"
+            Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="ArtStudio.Surface"
+            Color="#FFF5F5F5"/>
+    <SolidColorBrush x:Key="ArtStudio.SurfaceVariant"
+            Color="#FFE0E0E0"/>
+    <SolidColorBrush x:Key="ArtStudio.OnSurface"
+            Color="#FF000000"/>
+    <SolidColorBrush x:Key="ArtStudio.OnSurfaceVariant"
+            Color="#FF424242"/>
+    <SolidColorBrush x:Key="ArtStudio.OnBackground"
+            Color="#FF000000"/>
+
+    <!-- Primary Colors -->
+    <SolidColorBrush x:Key="ArtStudio.Primary"
+            Color="#FF1976D2"/>
+    <SolidColorBrush x:Key="ArtStudio.PrimaryLight"
+            Color="#FF42A5F5"/>
+    <SolidColorBrush x:Key="ArtStudio.PrimaryDark"
+            Color="#FF0D47A1"/>
+
+    <!-- Secondary Colors -->
+    <SolidColorBrush x:Key="ArtStudio.Secondary"
+            Color="#FFEC407A"/>
+    <SolidColorBrush x:Key="ArtStudio.SecondaryLight"
+            Color="#FFF48FB1"/>
+
+    <!-- Accent Colors -->
+    <SolidColorBrush x:Key="ArtStudio.Accent"
+            Color="#FF4CAF50"/>
+
+    <!-- Border Colors -->
+    <SolidColorBrush x:Key="ArtStudio.Border"
+            Color="#FFBDBDBD"/>
+    <SolidColorBrush x:Key="ArtStudio.BorderLight"
+            Color="#FFE0E0E0"/>
+
+</ResourceDictionary>

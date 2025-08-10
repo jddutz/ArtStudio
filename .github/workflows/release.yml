@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: Publish Windows x64
+        run: dotnet publish src/ArtStudio.WPF/ArtStudio.WPF.csproj --configuration Release --output ./publish/win-x64 --self-contained true --runtime win-x64 -p:PublishSingleFile=true
+
+      - name: Create ZIP archive
+        run: Compress-Archive -Path ./publish/win-x64/* -DestinationPath ./ArtStudio-${{ github.event.release.tag_name }}-win-x64.zip
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./ArtStudio-${{ github.event.release.tag_name }}-win-x64.zip
+          asset_name: ArtStudio-${{ github.event.release.tag_name }}-win-x64.zip
+          asset_content_type: application/zip
