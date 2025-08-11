@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -50,7 +52,7 @@ public class OpenRasterImporter : ImporterPluginBase
             XDocument stackXml;
             using (var stream = stackEntry.Open())
             {
-                stackXml = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+                stackXml = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken).ConfigureAwait(false);
             }
 
             var document = new ImportedDocument();
@@ -59,15 +61,15 @@ public class OpenRasterImporter : ImporterPluginBase
             var imageElement = stackXml.Root?.Element("image");
             if (imageElement != null)
             {
-                document.Width = int.Parse(imageElement.Attribute("w")?.Value ?? "0");
-                document.Height = int.Parse(imageElement.Attribute("h")?.Value ?? "0");
+                document.Width = int.Parse(imageElement.Attribute("w")?.Value ?? "0", CultureInfo.InvariantCulture);
+                document.Height = int.Parse(imageElement.Attribute("h")?.Value ?? "0", CultureInfo.InvariantCulture);
             }
 
             // Parse layers
             var stackElement = imageElement?.Element("stack");
             if (stackElement != null)
             {
-                await ParseLayers(stackElement, document.Layers, archive, cancellationToken);
+                await ParseLayers(stackElement, document.Layers, archive, cancellationToken).ConfigureAwait(false);
             }
 
             return new ImportResult
@@ -80,7 +82,10 @@ public class OpenRasterImporter : ImporterPluginBase
                 }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ImportResult
             {
@@ -90,16 +95,16 @@ public class OpenRasterImporter : ImporterPluginBase
         }
     }
 
-    private async Task ParseLayers(XElement stackElement, List<ImportedLayer> layers, ZipArchive archive, CancellationToken cancellationToken)
+    private async Task ParseLayers(XElement stackElement, Collection<ImportedLayer> layers, ZipArchive archive, CancellationToken cancellationToken)
     {
         foreach (var layerElement in stackElement.Elements("layer"))
         {
             var layer = new ImportedLayer
             {
                 Name = layerElement.Attribute("name")?.Value ?? "Unnamed Layer",
-                X = int.Parse(layerElement.Attribute("x")?.Value ?? "0"),
-                Y = int.Parse(layerElement.Attribute("y")?.Value ?? "0"),
-                Opacity = float.Parse(layerElement.Attribute("opacity")?.Value ?? "1.0"),
+                X = int.Parse(layerElement.Attribute("x")?.Value ?? "0", CultureInfo.InvariantCulture),
+                Y = int.Parse(layerElement.Attribute("y")?.Value ?? "0", CultureInfo.InvariantCulture),
+                Opacity = float.Parse(layerElement.Attribute("opacity")?.Value ?? "1.0", CultureInfo.InvariantCulture),
                 Visible = layerElement.Attribute("visibility")?.Value != "hidden",
                 BlendMode = layerElement.Attribute("composite-op")?.Value ?? "svg:src-over"
             };
@@ -113,7 +118,7 @@ public class OpenRasterImporter : ImporterPluginBase
                 {
                     using var stream = entry.Open();
                     using var memoryStream = new MemoryStream();
-                    await stream.CopyToAsync(memoryStream, cancellationToken);
+                    await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
                     layer.ImageData = memoryStream.ToArray();
 
                     // For simplicity, we'll assume the PNG dimensions match the layer

@@ -6,7 +6,7 @@ namespace ArtStudio.WPF.ViewModels;
 public class EditorViewModel : INotifyPropertyChanged
 {
     private string _documentTitle = "Untitled";
-    private bool _isModified = false;
+    private bool _isModified;
 
     public string DocumentTitle
     {

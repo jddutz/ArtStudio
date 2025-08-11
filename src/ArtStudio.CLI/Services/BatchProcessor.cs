@@ -81,7 +81,11 @@ public class BatchProcessor
                     break;
                 }
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            // Intentionally catching all exceptions during batch processing to record failures
+            // and continue with remaining commands rather than aborting the entire batch
             catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
                 var failureResult = Core.CommandResult.Failure($"Exception during batch execution: {ex.Message}", ex);
                 var batchResult = new BatchCommandResult

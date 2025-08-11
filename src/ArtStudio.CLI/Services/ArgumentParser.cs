@@ -51,14 +51,21 @@ public class ArgumentParser
     /// <summary>
     /// Parse parameter value from string
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public object ParseParameterValue(string value)
+#pragma warning restore CA1822 // Mark members as static
     {
         // Try to parse as JSON first (for complex objects)
         try
         {
             return JsonSerializer.Deserialize<object>(value) ?? value;
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Intentionally catching all JSON parsing exceptions to fall back to simple type parsing
+        // This allows flexible parameter input that works with both simple and complex values
         catch
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             // Fall back to simple type parsing
             if (bool.TryParse(value, out var boolValue))
@@ -77,12 +84,15 @@ public class ArgumentParser
     /// <summary>
     /// Parse multiple command requests from file
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public async Task<IEnumerable<BatchCommandRequest>> ParseBatchFileAsync(string filePath)
+#pragma warning restore CA1822 // Mark members as static
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Batch file not found: {filePath}");
 
-        var content = await File.ReadAllTextAsync(filePath);
+        var content = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
 
         try
         {
@@ -98,10 +108,15 @@ public class ArgumentParser
     /// <summary>
     /// Validate command parameters against command schema
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public ValidationResult ValidateParameters(
         Core.IPluginCommand command,
         IDictionary<string, object>? parameters)
+#pragma warning restore CA1822 // Mark members as static
     {
+        ArgumentNullException.ThrowIfNull(command);
+
         var warnings = new List<string>();
         var errors = new List<string>();
 

@@ -21,6 +21,87 @@ public class WorkspaceViewModel : INotifyPropertyChanged
     private WorkspaceConfiguration? _activeWorkspace;
     private bool _isLoading;
 
+    // High-performance logging delegates
+    private static readonly Action<ILogger, string, Exception?> LogSwitchWorkspaceWarning =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(LogSwitchWorkspaceWarning)),
+            "Failed to switch to workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSwitchWorkspaceError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(2, nameof(LogSwitchWorkspaceError)),
+            "Error switching to workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceCreated =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3, nameof(LogWorkspaceCreated)),
+            "Created new workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCreateWorkspaceError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(4, nameof(LogCreateWorkspaceError)),
+            "Error creating workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceFromCurrentCreated =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(5, nameof(LogWorkspaceFromCurrentCreated)),
+            "Created workspace from current layout: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCreateFromCurrentError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(6, nameof(LogCreateFromCurrentError)),
+            "Error creating workspace from current layout: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceDeleted =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(7, nameof(LogWorkspaceDeleted)),
+            "Deleted workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogDeleteWorkspaceWarning =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(8, nameof(LogDeleteWorkspaceWarning)),
+            "Failed to delete workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogDeleteWorkspaceError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(9, nameof(LogDeleteWorkspaceError)),
+            "Error deleting workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogWorkspaceDuplicated =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(10, nameof(LogWorkspaceDuplicated)),
+            "Duplicated workspace: {OriginalName} -> {NewName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogDuplicateWorkspaceError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(11, nameof(LogDuplicateWorkspaceError)),
+            "Error duplicating workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceReset =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(12, nameof(LogWorkspaceReset)),
+            "Reset workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogResetWorkspaceError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(13, nameof(LogResetWorkspaceError)),
+            "Error resetting workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCurrentWorkspaceUpdated =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(14, nameof(LogCurrentWorkspaceUpdated)),
+            "Updated current workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string?, Exception?> LogUpdateCurrentWorkspaceError =
+        LoggerMessage.Define<string?>(LogLevel.Error, new EventId(15, nameof(LogUpdateCurrentWorkspaceError)),
+            "Error updating current workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogActiveWorkspaceChanged =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(16, nameof(LogActiveWorkspaceChanged)),
+            "Active workspace changed to: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceCreatedEvent =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(17, nameof(LogWorkspaceCreatedEvent)),
+            "Workspace created: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceDeletedEvent =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(18, nameof(LogWorkspaceDeletedEvent)),
+            "Workspace deleted: {WorkspaceName}");
+
+    private static readonly Action<ILogger, int, int, int, Exception?> LogWorkspacesLoaded =
+        LoggerMessage.Define<int, int, int>(LogLevel.Debug, new EventId(19, nameof(LogWorkspacesLoaded)),
+            "Loaded {Count} workspaces ({BuiltIn} built-in, {Custom} custom)");
+
+    private static readonly Action<ILogger, Exception?> LogLoadWorkspacesError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(20, nameof(LogLoadWorkspacesError)),
+            "Error loading workspaces");
+
     public WorkspaceViewModel(
         IWorkspaceManager workspaceManager,
         ILogger<WorkspaceViewModel>? logger = null)
@@ -126,35 +207,35 @@ public class WorkspaceViewModel : INotifyPropertyChanged
     private void InitializeCommands()
     {
         SwitchWorkspaceCommand = new RelayCommand<WorkspaceConfiguration>(
-            async workspace => await SwitchWorkspaceAsync(workspace),
+            async workspace => await SwitchWorkspaceAsync(workspace).ConfigureAwait(false),
             workspace => workspace != null && workspace != ActiveWorkspace && !IsLoading);
 
         CreateWorkspaceCommand = new RelayCommand<string>(
-            async name => await CreateWorkspaceAsync(name),
+            async name => await CreateWorkspaceAsync(name).ConfigureAwait(false),
             name => !string.IsNullOrWhiteSpace(name) && !IsLoading);
 
         CreateFromCurrentCommand = new RelayCommand<string>(
-            async name => await CreateFromCurrentAsync(name),
+            async name => await CreateFromCurrentAsync(name).ConfigureAwait(false),
             name => !string.IsNullOrWhiteSpace(name) && !IsLoading);
 
         DeleteWorkspaceCommand = new RelayCommand<WorkspaceConfiguration>(
-            async workspace => await DeleteWorkspaceAsync(workspace),
+            async workspace => await DeleteWorkspaceAsync(workspace).ConfigureAwait(false),
             workspace => workspace != null && !workspace.IsBuiltIn && workspace != ActiveWorkspace && !IsLoading);
 
         DuplicateWorkspaceCommand = new RelayCommand<WorkspaceConfiguration>(
-            async workspace => await DuplicateWorkspaceAsync(workspace),
+            async workspace => await DuplicateWorkspaceAsync(workspace).ConfigureAwait(false),
             workspace => workspace != null && !IsLoading);
 
         ResetWorkspaceCommand = new RelayCommand<WorkspaceConfiguration>(
-            async workspace => await ResetWorkspaceAsync(workspace),
+            async workspace => await ResetWorkspaceAsync(workspace).ConfigureAwait(false),
             workspace => workspace != null && !IsLoading);
 
         UpdateCurrentWorkspaceCommand = new RelayCommand(
-            async () => await UpdateCurrentWorkspaceAsync(),
+            async () => await UpdateCurrentWorkspaceAsync().ConfigureAwait(false),
             () => ActiveWorkspace != null && !IsLoading);
 
         RefreshCommand = new RelayCommand(
-            async () => await LoadWorkspacesAsync(),
+            async () => await LoadWorkspacesAsync().ConfigureAwait(false),
             () => !IsLoading);
     }
 
@@ -166,16 +247,21 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         try
         {
             IsLoading = true;
-            var success = await _workspaceManager.SwitchToWorkspaceAsync(workspace.Id);
+            var success = await _workspaceManager.SwitchToWorkspaceAsync(workspace.Id).ConfigureAwait(false);
 
             if (!success)
             {
-                _logger?.LogWarning("Failed to switch to workspace: {WorkspaceName}", workspace.Name);
+                if (_logger != null)
+                    LogSwitchWorkspaceWarning(_logger, workspace.Name, null);
             }
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error switching to workspace: {WorkspaceName}", workspace.Name);
+            if (_logger != null)
+                LogSwitchWorkspaceError(_logger, workspace.Name, ex);
         }
         finally
         {
@@ -191,12 +277,17 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         try
         {
             IsLoading = true;
-            var workspace = await _workspaceManager.CreateWorkspaceAsync(name);
-            _logger?.LogInformation("Created new workspace: {WorkspaceName}", workspace.Name);
+            var workspace = await _workspaceManager.CreateWorkspaceAsync(name).ConfigureAwait(false);
+            if (_logger != null)
+                LogWorkspaceCreated(_logger, workspace.Name, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error creating workspace: {WorkspaceName}", name);
+            if (_logger != null)
+                LogCreateWorkspaceError(_logger, name, ex);
         }
         finally
         {
@@ -212,12 +303,17 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         try
         {
             IsLoading = true;
-            var workspace = await _workspaceManager.CreateWorkspaceFromCurrentAsync(name);
-            _logger?.LogInformation("Created workspace from current layout: {WorkspaceName}", workspace.Name);
+            var workspace = await _workspaceManager.CreateWorkspaceFromCurrentAsync(name).ConfigureAwait(false);
+            if (_logger != null)
+                LogWorkspaceFromCurrentCreated(_logger, workspace.Name, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error creating workspace from current layout: {WorkspaceName}", name);
+            if (_logger != null)
+                LogCreateFromCurrentError(_logger, name, ex);
         }
         finally
         {
@@ -233,20 +329,26 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         try
         {
             IsLoading = true;
-            var success = await _workspaceManager.DeleteWorkspaceAsync(workspace.Id);
+            var success = await _workspaceManager.DeleteWorkspaceAsync(workspace.Id).ConfigureAwait(false);
 
             if (success)
             {
-                _logger?.LogInformation("Deleted workspace: {WorkspaceName}", workspace.Name);
+                if (_logger != null)
+                    LogWorkspaceDeleted(_logger, workspace.Name, null);
             }
             else
             {
-                _logger?.LogWarning("Failed to delete workspace: {WorkspaceName}", workspace.Name);
+                if (_logger != null)
+                    LogDeleteWorkspaceWarning(_logger, workspace.Name, null);
             }
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error deleting workspace: {WorkspaceName}", workspace.Name);
+            if (_logger != null)
+                LogDeleteWorkspaceError(_logger, workspace.Name, ex);
         }
         finally
         {
@@ -263,12 +365,17 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         {
             IsLoading = true;
             var newName = $"Copy of {workspace.Name}";
-            var duplicatedWorkspace = await _workspaceManager.DuplicateWorkspaceAsync(workspace.Id, newName);
-            _logger?.LogInformation("Duplicated workspace: {OriginalName} -> {NewName}", workspace.Name, duplicatedWorkspace.Name);
+            var duplicatedWorkspace = await _workspaceManager.DuplicateWorkspaceAsync(workspace.Id, newName).ConfigureAwait(false);
+            if (_logger != null)
+                LogWorkspaceDuplicated(_logger, workspace.Name, duplicatedWorkspace.Name, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error duplicating workspace: {WorkspaceName}", workspace.Name);
+            if (_logger != null)
+                LogDuplicateWorkspaceError(_logger, workspace.Name, ex);
         }
         finally
         {
@@ -284,12 +391,17 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         try
         {
             IsLoading = true;
-            await _workspaceManager.ResetWorkspaceAsync(workspace.Id);
-            _logger?.LogInformation("Reset workspace: {WorkspaceName}", workspace.Name);
+            await _workspaceManager.ResetWorkspaceAsync(workspace.Id).ConfigureAwait(false);
+            if (_logger != null)
+                LogWorkspaceReset(_logger, workspace.Name, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error resetting workspace: {WorkspaceName}", workspace.Name);
+            if (_logger != null)
+                LogResetWorkspaceError(_logger, workspace.Name, ex);
         }
         finally
         {
@@ -305,12 +417,17 @@ public class WorkspaceViewModel : INotifyPropertyChanged
         try
         {
             IsLoading = true;
-            await _workspaceManager.UpdateCurrentWorkspaceAsync();
-            _logger?.LogInformation("Updated current workspace: {WorkspaceName}", ActiveWorkspace.Name);
+            await _workspaceManager.UpdateCurrentWorkspaceAsync().ConfigureAwait(false);
+            if (_logger != null)
+                LogCurrentWorkspaceUpdated(_logger, ActiveWorkspace.Name, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error updating current workspace: {WorkspaceName}", ActiveWorkspace?.Name);
+            if (_logger != null)
+                LogUpdateCurrentWorkspaceError(_logger, ActiveWorkspace?.Name, ex);
         }
         finally
         {
@@ -325,19 +442,28 @@ public class WorkspaceViewModel : INotifyPropertyChanged
     private void OnWorkspaceChanged(object? sender, WorkspaceChangedEventArgs e)
     {
         ActiveWorkspace = e.CurrentWorkspace;
-        _logger?.LogDebug("Active workspace changed to: {WorkspaceName}", e.CurrentWorkspace.Name);
+        {
+            if (_logger != null)
+                LogActiveWorkspaceChanged(_logger, e.CurrentWorkspace.Name, null);
+        }
     }
 
     private void OnWorkspaceCreated(object? sender, WorkspaceCreatedEventArgs e)
     {
         AddWorkspaceToCollections(e.Workspace);
-        _logger?.LogDebug("Workspace created: {WorkspaceName}", e.Workspace.Name);
+        {
+            if (_logger != null)
+                LogWorkspaceCreatedEvent(_logger, e.Workspace.Name, null);
+        }
     }
 
     private void OnWorkspaceDeleted(object? sender, WorkspaceDeletedEventArgs e)
     {
         RemoveWorkspaceFromCollections(e.WorkspaceId);
-        _logger?.LogDebug("Workspace deleted: {WorkspaceName}", e.WorkspaceName);
+        {
+            if (_logger != null)
+                LogWorkspaceDeletedEvent(_logger, e.WorkspaceName, null);
+        }
     }
 
     #endregion
@@ -373,12 +499,16 @@ public class WorkspaceViewModel : INotifyPropertyChanged
             // Set active workspace
             ActiveWorkspace = _workspaceManager.ActiveWorkspace;
 
-            _logger?.LogDebug("Loaded {Count} workspaces ({BuiltIn} built-in, {Custom} custom)",
-                workspaces.Count, builtInWorkspaces.Count, customWorkspaces.Count);
+            if (_logger != null)
+                LogWorkspacesLoaded(_logger, workspaces.Count, builtInWorkspaces.Count, customWorkspaces.Count, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error loading workspaces");
+            if (_logger != null)
+                LogLoadWorkspacesError(_logger, ex);
         }
         finally
         {

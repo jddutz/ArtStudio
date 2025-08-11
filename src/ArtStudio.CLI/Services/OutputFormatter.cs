@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using ArtStudio.CLI.Models;
@@ -10,6 +11,8 @@ namespace ArtStudio.CLI.Services;
 /// </summary>
 public class OutputFormatter
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
     /// <summary>
     /// Output format options
     /// </summary>
@@ -24,8 +27,13 @@ public class OutputFormatter
     /// <summary>
     /// Format command result
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public string FormatCommandResult(CommandResult result, OutputFormat format = OutputFormat.Text)
+#pragma warning restore CA1822 // Mark members as static
     {
+        ArgumentNullException.ThrowIfNull(result);
+
         return format switch
         {
             OutputFormat.Json => FormatCommandResultAsJson(result),
@@ -38,8 +46,13 @@ public class OutputFormatter
     /// <summary>
     /// Format batch result
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public string FormatBatchResult(BatchResult result, OutputFormat format = OutputFormat.Text)
+#pragma warning restore CA1822 // Mark members as static
     {
+        ArgumentNullException.ThrowIfNull(result);
+
         return format switch
         {
             OutputFormat.Json => FormatBatchResultAsJson(result),
@@ -52,7 +65,10 @@ public class OutputFormatter
     /// <summary>
     /// Format command list
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public string FormatCommandList(IEnumerable<IPluginCommand> commands, OutputFormat format = OutputFormat.Text)
+#pragma warning restore CA1822 // Mark members as static
     {
         return format switch
         {
@@ -73,13 +89,13 @@ public class OutputFormatter
         {
             output.AppendLine("✓ Command executed successfully");
             if (!string.IsNullOrWhiteSpace(result.Message))
-                output.AppendLine($"  {result.Message}");
+                output.AppendLine(CultureInfo.InvariantCulture, $"  {result.Message}");
         }
         else
         {
             output.AppendLine("✗ Command failed");
             if (!string.IsNullOrWhiteSpace(result.Message))
-                output.AppendLine($"  Error: {result.Message}");
+                output.AppendLine(CultureInfo.InvariantCulture, $"  Error: {result.Message}");
         }
 
         if (result.Data?.Count > 0)
@@ -87,7 +103,7 @@ public class OutputFormatter
             output.AppendLine("  Output data:");
             foreach (var (key, value) in result.Data)
             {
-                output.AppendLine($"    {key}: {value}");
+                output.AppendLine(CultureInfo.InvariantCulture, $"    {key}: {value}");
             }
         }
 
@@ -98,10 +114,10 @@ public class OutputFormatter
     {
         var output = new StringBuilder();
 
-        output.AppendLine($"Batch execution completed:");
-        output.AppendLine($"  ✓ Successful: {result.SuccessCount}");
-        output.AppendLine($"  ✗ Failed: {result.FailureCount}");
-        output.AppendLine($"  Duration: {result.CompletedAt - result.StartedAt:mm\\:ss\\.fff}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"Batch execution completed:");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  ✓ Successful: {result.SuccessCount}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  ✗ Failed: {result.FailureCount}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  Duration: {result.CompletedAt - result.StartedAt:mm\\:ss\\.fff}");
         output.AppendLine();
 
         if (result.Results.Any())
@@ -110,10 +126,10 @@ public class OutputFormatter
             foreach (var commandResult in result.Results)
             {
                 var status = commandResult.Result.IsSuccess ? "✓" : "✗";
-                output.AppendLine($"  {status} {commandResult.CommandId}");
+                output.AppendLine(CultureInfo.InvariantCulture, $"  {status} {commandResult.CommandId}");
                 if (!commandResult.Result.IsSuccess && !string.IsNullOrWhiteSpace(commandResult.Result.Message))
                 {
-                    output.AppendLine($"    Error: {commandResult.Result.Message}");
+                    output.AppendLine(CultureInfo.InvariantCulture, $"    Error: {commandResult.Result.Message}");
                 }
             }
         }
@@ -137,14 +153,14 @@ public class OutputFormatter
             if (categoryCommands.Count == 0)
                 continue;
 
-            output.AppendLine($"{category}:");
+            output.AppendLine(CultureInfo.InvariantCulture, $"{category}:");
             foreach (var command in categoryCommands.OrderBy(c => c.Priority).ThenBy(c => c.DisplayName))
             {
-                output.Append($"  {command.CommandId}");
-                output.Append($" - {command.Description}");
+                output.Append(CultureInfo.InvariantCulture, $"  {command.CommandId}");
+                output.Append(CultureInfo.InvariantCulture, $" - {command.Description}");
 
                 if (!string.IsNullOrWhiteSpace(command.KeyboardShortcut))
-                    output.Append($" ({command.KeyboardShortcut})");
+                    output.Append(CultureInfo.InvariantCulture, $" ({command.KeyboardShortcut})");
 
                 output.AppendLine();
             }
@@ -168,7 +184,7 @@ public class OutputFormatter
             exception = result.Exception?.Message
         };
 
-        return JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(data, JsonOptions);
     }
 
     private static string FormatBatchResultAsJson(BatchResult result)
@@ -192,7 +208,7 @@ public class OutputFormatter
             })
         };
 
-        return JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(data, JsonOptions);
     }
 
     private static string FormatCommandListAsJson(IEnumerable<IPluginCommand> commands)
@@ -218,7 +234,7 @@ public class OutputFormatter
             })
         });
 
-        return JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(data, JsonOptions);
     }
 
     #endregion
@@ -232,12 +248,12 @@ public class OutputFormatter
         output.AppendLine("┌─────────┬────────────────────────────────────────┐");
         output.AppendLine("│ Field   │ Value                                  │");
         output.AppendLine("├─────────┼────────────────────────────────────────┤");
-        output.AppendLine($"│ Status  │ {(result.IsSuccess ? "Success" : "Failed"),-38} │");
+        output.AppendLine(CultureInfo.InvariantCulture, $"│ Status  │ {(result.IsSuccess ? "Success" : "Failed"),-38} │");
 
         if (!string.IsNullOrWhiteSpace(result.Message))
         {
             var message = result.Message.Length > 38 ? result.Message[..35] + "..." : result.Message;
-            output.AppendLine($"│ Message │ {message,-38} │");
+            output.AppendLine(CultureInfo.InvariantCulture, $"│ Message │ {message,-38} │");
         }
 
         output.AppendLine("└─────────┴────────────────────────────────────────┘");
@@ -253,8 +269,8 @@ public class OutputFormatter
         output.AppendLine("┌──────────┬───────┐");
         output.AppendLine("│ Status   │ Count │");
         output.AppendLine("├──────────┼───────┤");
-        output.AppendLine($"│ Success  │ {result.SuccessCount,5} │");
-        output.AppendLine($"│ Failed   │ {result.FailureCount,5} │");
+        output.AppendLine(CultureInfo.InvariantCulture, $"│ Success  │ {result.SuccessCount,5} │");
+        output.AppendLine(CultureInfo.InvariantCulture, $"│ Failed   │ {result.FailureCount,5} │");
         output.AppendLine("└──────────┴───────┘");
 
         return output.ToString();
@@ -278,7 +294,7 @@ public class OutputFormatter
             var description = command.Description.Length > 30 ? command.Description[..27] + "..." : command.Description;
             var category = command.Category.ToString();
 
-            output.AppendLine($"│ {commandId,-19} │ {description,-30} │ {category,-8} │");
+            output.AppendLine(CultureInfo.InvariantCulture, $"│ {commandId,-19} │ {description,-30} │ {category,-8} │");
         }
 
         output.AppendLine("└─────────────────────┴────────────────────────────────┴──────────┘");
@@ -295,17 +311,17 @@ public class OutputFormatter
         var output = new StringBuilder();
 
         output.AppendLine("result:");
-        output.AppendLine($"  success: {result.IsSuccess.ToString().ToLowerInvariant()}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  success: {result.IsSuccess.ToString().ToUpperInvariant()}");
 
         if (!string.IsNullOrWhiteSpace(result.Message))
-            output.AppendLine($"  message: \"{result.Message}\"");
+            output.AppendLine(CultureInfo.InvariantCulture, $"  message: \"{result.Message}\"");
 
         if (result.Data?.Count > 0)
         {
             output.AppendLine("  data:");
             foreach (var (key, value) in result.Data)
             {
-                output.AppendLine($"    {key}: \"{value}\"");
+                output.AppendLine(CultureInfo.InvariantCulture, $"    {key}: \"{value}\"");
             }
         }
 
@@ -317,21 +333,21 @@ public class OutputFormatter
         var output = new StringBuilder();
 
         output.AppendLine("batch:");
-        output.AppendLine($"  success: {result.IsSuccess.ToString().ToLowerInvariant()}");
-        output.AppendLine($"  successCount: {result.SuccessCount}");
-        output.AppendLine($"  failureCount: {result.FailureCount}");
-        output.AppendLine($"  startedAt: \"{result.StartedAt:yyyy-MM-ddTHH:mm:ss.fffZ}\"");
-        output.AppendLine($"  completedAt: \"{result.CompletedAt:yyyy-MM-ddTHH:mm:ss.fffZ}\"");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  success: {result.IsSuccess.ToString().ToUpperInvariant()}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  successCount: {result.SuccessCount}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  failureCount: {result.FailureCount}");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  startedAt: \"{result.StartedAt:yyyy-MM-ddTHH:mm:ss.fffZ}\"");
+        output.AppendLine(CultureInfo.InvariantCulture, $"  completedAt: \"{result.CompletedAt:yyyy-MM-ddTHH:mm:ss.fffZ}\"");
 
         if (result.Results.Any())
         {
             output.AppendLine("  results:");
             foreach (var commandResult in result.Results)
             {
-                output.AppendLine($"    - commandId: \"{commandResult.CommandId}\"");
-                output.AppendLine($"      success: {commandResult.Result.IsSuccess.ToString().ToLowerInvariant()}");
+                output.AppendLine(CultureInfo.InvariantCulture, $"    - commandId: \"{commandResult.CommandId}\"");
+                output.AppendLine(CultureInfo.InvariantCulture, $"      success: {commandResult.Result.IsSuccess.ToString().ToUpperInvariant()}");
                 if (!string.IsNullOrWhiteSpace(commandResult.Result.Message))
-                    output.AppendLine($"      message: \"{commandResult.Result.Message}\"");
+                    output.AppendLine(CultureInfo.InvariantCulture, $"      message: \"{commandResult.Result.Message}\"");
             }
         }
 
@@ -345,16 +361,16 @@ public class OutputFormatter
         output.AppendLine("commands:");
         foreach (var command in commands.OrderBy(c => c.Category).ThenBy(c => c.CommandId))
         {
-            output.AppendLine($"  - commandId: \"{command.CommandId}\"");
-            output.AppendLine($"    displayName: \"{command.DisplayName}\"");
-            output.AppendLine($"    description: \"{command.Description}\"");
-            output.AppendLine($"    category: \"{command.Category}\"");
-            output.AppendLine($"    priority: {command.Priority}");
-            output.AppendLine($"    enabled: {command.IsEnabled.ToString().ToLowerInvariant()}");
-            output.AppendLine($"    visible: {command.IsVisible.ToString().ToLowerInvariant()}");
+            output.AppendLine(CultureInfo.InvariantCulture, $"  - commandId: \"{command.CommandId}\"");
+            output.AppendLine(CultureInfo.InvariantCulture, $"    displayName: \"{command.DisplayName}\"");
+            output.AppendLine(CultureInfo.InvariantCulture, $"    description: \"{command.Description}\"");
+            output.AppendLine(CultureInfo.InvariantCulture, $"    category: \"{command.Category}\"");
+            output.AppendLine(CultureInfo.InvariantCulture, $"    priority: {command.Priority}");
+            output.AppendLine(CultureInfo.InvariantCulture, $"    enabled: {command.IsEnabled.ToString().ToUpperInvariant()}");
+            output.AppendLine(CultureInfo.InvariantCulture, $"    visible: {command.IsVisible.ToString().ToUpperInvariant()}");
 
             if (!string.IsNullOrWhiteSpace(command.KeyboardShortcut))
-                output.AppendLine($"    keyboardShortcut: \"{command.KeyboardShortcut}\"");
+                output.AppendLine(CultureInfo.InvariantCulture, $"    keyboardShortcut: \"{command.KeyboardShortcut}\"");
         }
 
         return output.ToString();

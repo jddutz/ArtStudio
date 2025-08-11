@@ -8,6 +8,8 @@ namespace ArtStudio.CLI.Commands;
 /// </summary>
 public class HelpCommandBuilder
 {
+    private static readonly string[] UsageAliases = ["--usage", "-u"];
+
     private readonly HelpProvider _helpProvider;
 
     /// <summary>
@@ -36,7 +38,7 @@ public class HelpCommandBuilder
 
         // Usage option
         var usageOption = new Option<bool>(
-            aliases: new[] { "--usage", "-u" },
+            aliases: UsageAliases,
             description: "Show only usage syntax");
         helpCommand.AddOption(usageOption);
 
@@ -69,7 +71,11 @@ public class HelpCommandBuilder
 
                 Environment.ExitCode = 0;
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            // Intentionally catching all exceptions in CLI command handler to provide
+            // user-friendly error messages and appropriate exit codes
             catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
                 Console.Error.WriteLine($"Error: {ex.Message}");
                 Environment.ExitCode = 1;

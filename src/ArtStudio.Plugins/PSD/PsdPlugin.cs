@@ -44,7 +44,10 @@ public class PsdImporter : ImporterPluginBase
                 ErrorMessage = "PSD import not yet implemented. Consider using a PSD library or implementing custom PSD parsing."
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ImportResult
             {
@@ -91,7 +94,10 @@ public class PsdExporter : ExporterPluginBase
                 ErrorMessage = "PSD export not yet implemented. Consider using a PSD library or implementing custom PSD creation."
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ExportResult
             {

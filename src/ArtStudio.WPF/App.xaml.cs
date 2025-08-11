@@ -24,7 +24,10 @@ public partial class App : Application
             InitializeComponent();
             LoggingService.LogInfo("InitializeComponent completed successfully");
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catch all critical errors during app initialization to provide user feedback before shutdown
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             LoggingService.LogCritical(ex, "Critical error during App constructor or XAML parsing");
 
@@ -86,13 +89,13 @@ public partial class App : Application
                 .Build();
 
             // Start the host
-            await _host.StartAsync();
+            await _host.StartAsync().ConfigureAwait(false);
             _serviceProvider = _host.Services;
 
             LoggingService.LogInfo("Dependency injection configured successfully");
 
             // Initialize services
-            await ServiceConfiguration.InitializeServicesAsync(_serviceProvider, this);
+            await ServiceConfiguration.InitializeServicesAsync(_serviceProvider, this).ConfigureAwait(false);
 
             LoggingService.LogInfo("Services initialized successfully");
 
@@ -105,7 +108,10 @@ public partial class App : Application
 
             LoggingService.LogInfo("ArtStudio application startup completed successfully");
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catch all critical errors during startup to provide user feedback before shutdown
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             LoggingService.LogCritical(ex, "Critical error during application startup");
 
@@ -177,6 +183,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        ArgumentNullException.ThrowIfNull(e);
         LoggingService.LogInfo($"Application exiting with code: {e.ApplicationExitCode}");
 
         // Dispose of the host

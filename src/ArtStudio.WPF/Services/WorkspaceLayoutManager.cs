@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -21,6 +22,111 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     private readonly Dictionary<string, FrameworkElement> _availablePanels = new();
     private readonly Dictionary<string, ToolBar> _availableToolbars = new();
 
+    // High-performance logging delegates
+    private static readonly Action<ILogger, Exception?> LogInitialized =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(1, nameof(Initialize)),
+            "Initialized workspace layout manager with docking manager");
+
+    private static readonly Action<ILogger, string, Exception?> LogPanelRegistered =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(RegisterPanel)),
+            "Registered panel: {PanelId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogToolbarRegistered =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, nameof(RegisterToolbar)),
+            "Registered toolbar: {ToolbarId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogLayoutManagerNotInitialized =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, nameof(ApplyWorkspaceAsync)),
+            "Layout manager not initialized, deferring workspace application: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogApplyingWorkspace =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(5, nameof(ApplyWorkspaceAsync)),
+            "Applying workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToApplyLayoutData =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(6, nameof(ApplyWorkspaceAsync)),
+            "Failed to apply layout data for workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceAppliedSuccessfully =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(7, nameof(ApplyWorkspaceAsync)),
+            "Successfully applied workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToApplyWorkspace =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(8, nameof(ApplyWorkspaceAsync)),
+            "Failed to apply workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, Exception?> LogLayoutManagerNotInitializedForCapture =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(9, nameof(CaptureCurrentLayoutAsync)),
+            "Layout manager not initialized, returning empty workspace configuration");
+
+    private static readonly Action<ILogger, string, Exception?> LogWorkspaceCaptured =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(10, nameof(CaptureCurrentLayoutAsync)),
+            "Captured current layout as workspace: {WorkspaceName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogPanelNotFoundInRegistry =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(11, nameof(AddPanelAsync)),
+            "Panel not found in registry: {PanelId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogPanelAdded =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(12, nameof(AddPanelAsync)),
+            "Added panel: {PanelId} to {DockSide}");
+
+    private static readonly Action<ILogger, string, Exception?> LogPanelRemoved =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(13, nameof(RemovePanelAsync)),
+            "Removed panel: {PanelId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogPanelNotFoundForMove =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(14, nameof(MovePanelAsync)),
+            "Panel not found for move: {PanelId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogPanelMoved =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(15, nameof(MovePanelAsync)),
+            "Moved panel: {PanelId} to {DockSide}");
+
+    private static readonly Action<ILogger, string, double, double, Exception?> LogPanelResized =
+        LoggerMessage.Define<string, double, double>(LogLevel.Debug, new EventId(16, nameof(ResizePanelAsync)),
+            "Resized panel: {PanelId} to {Width}x{Height}");
+
+    private static readonly Action<ILogger, string, bool, Exception?> LogPanelVisibilitySet =
+        LoggerMessage.Define<string, bool>(LogLevel.Debug, new EventId(17, nameof(SetPanelVisibilityAsync)),
+            "Set panel visibility: {PanelId} = {IsVisible}");
+
+    private static readonly Action<ILogger, string, Exception?> LogToolbarAdded =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(18, nameof(AddToolbarAsync)),
+            "Added toolbar: {ToolbarId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogToolbarRemoved =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(19, nameof(RemoveToolbarAsync)),
+            "Removed toolbar: {ToolbarId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogToolbarMoved =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(20, nameof(MoveToolbarAsync)),
+            "Moved toolbar: {ToolbarId} to {Position}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogCommandAddedToToolbar =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(21, nameof(AddToolbarCommandAsync)),
+            "Added command {CommandId} to toolbar: {ToolbarId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogCommandRemovedFromToolbar =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(22, nameof(RemoveToolbarCommandAsync)),
+            "Removed command {CommandId} from toolbar: {ToolbarId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogToolbarCommandsReordered =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(23, nameof(ReorderToolbarCommandsAsync)),
+            "Reordered commands in toolbar: {ToolbarId}");
+
+    private static readonly Action<ILogger, string, bool, Exception?> LogToolbarVisibilitySet =
+        LoggerMessage.Define<string, bool>(LogLevel.Debug, new EventId(24, nameof(SetToolbarVisibilityAsync)),
+            "Set toolbar visibility: {ToolbarId} = {IsVisible}");
+
+    private static readonly Action<ILogger, Exception?> LogResetToDefaultLayout =
+        LoggerMessage.Define(LogLevel.Information, new EventId(25, nameof(ResetToDefaultLayoutAsync)),
+            "Reset to default layout");
+
+    private static readonly Action<ILogger, Exception?> LogLayoutDataApplied =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(26, "ApplyLayoutData"),
+            "Applied layout data (placeholder implementation)");
+
     public WorkspaceLayoutManager(ILogger<WorkspaceLayoutManager>? logger = null)
     {
         _logger = logger;
@@ -32,7 +138,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     public void Initialize(DockingManager dockingManager)
     {
         _dockingManager = dockingManager ?? throw new ArgumentNullException(nameof(dockingManager));
-        _logger?.LogDebug("Initialized workspace layout manager with docking manager");
+        if (_logger != null)
+            LogInitialized(_logger, null);
     }
 
     /// <summary>
@@ -42,11 +149,11 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     {
         if (string.IsNullOrWhiteSpace(panelId))
             throw new ArgumentException("Panel ID cannot be empty", nameof(panelId));
-        if (panelContent == null)
-            throw new ArgumentNullException(nameof(panelContent));
+        ArgumentNullException.ThrowIfNull(panelContent);
 
         _availablePanels[panelId] = panelContent;
-        _logger?.LogDebug("Registered panel: {PanelId}", panelId);
+        if (_logger != null)
+            LogPanelRegistered(_logger, panelId, null);
     }
 
     /// <summary>
@@ -56,26 +163,31 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     {
         if (string.IsNullOrWhiteSpace(toolbarId))
             throw new ArgumentException("Toolbar ID cannot be empty", nameof(toolbarId));
-        if (toolbar == null)
-            throw new ArgumentNullException(nameof(toolbar));
+        ArgumentNullException.ThrowIfNull(toolbar);
 
         _availableToolbars[toolbarId] = toolbar;
-        _logger?.LogDebug("Registered toolbar: {ToolbarId}", toolbarId);
+        if (_logger != null)
+            LogToolbarRegistered(_logger, toolbarId, null);
     }
 
     /// <inheritdoc />
     public Task ApplyWorkspaceAsync(WorkspaceConfiguration workspace)
     {
+        ArgumentNullException.ThrowIfNull(workspace);
+
         if (_dockingManager == null)
-            throw new InvalidOperationException("Layout manager not initialized");
-        if (workspace == null)
-            throw new ArgumentNullException(nameof(workspace));
+        {
+            if (_logger != null)
+                LogLayoutManagerNotInitialized(_logger, workspace.Name, null);
+            return Task.CompletedTask;
+        }
 
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             try
             {
-                _logger?.LogInformation("Applying workspace: {WorkspaceName}", workspace.Name);
+                if (_logger != null)
+                    LogApplyingWorkspace(_logger, workspace.Name, null);
 
                 // Clear current layout
                 ClearLayout();
@@ -93,17 +205,23 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
                     {
                         ApplyLayoutData(workspace.LayoutData);
                     }
+#pragma warning disable CA1031 // Do not catch general exception types
+                    // Gracefully handle layout data errors to allow partial workspace application
                     catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
                     {
-                        _logger?.LogWarning(ex, "Failed to apply layout data for workspace: {WorkspaceName}", workspace.Name);
+                        if (_logger != null)
+                            LogFailedToApplyLayoutData(_logger, workspace.Name, ex);
                     }
                 }
 
-                _logger?.LogInformation("Successfully applied workspace: {WorkspaceName}", workspace.Name);
+                if (_logger != null)
+                    LogWorkspaceAppliedSuccessfully(_logger, workspace.Name, null);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Failed to apply workspace: {WorkspaceName}", workspace.Name);
+                if (_logger != null)
+                    LogFailedToApplyWorkspace(_logger, workspace.Name, ex);
                 throw;
             }
         }).Task;
@@ -113,7 +231,15 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     public Task<WorkspaceConfiguration> CaptureCurrentLayoutAsync(string name, string description = "")
     {
         if (_dockingManager == null)
-            throw new InvalidOperationException("Layout manager not initialized");
+        {
+            if (_logger != null)
+                LogLayoutManagerNotInitializedForCapture(_logger, null);
+            return Task.FromResult(new WorkspaceConfiguration
+            {
+                Name = name,
+                Description = description
+            });
+        }
 
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
@@ -124,15 +250,24 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             };
 
             // Capture panels
-            workspace.Panels = CapturePanels();
+            var panels = CapturePanels();
+            foreach (var panel in panels)
+            {
+                workspace.Panels.Add(panel);
+            }
 
             // Capture toolbars
-            workspace.Toolbars = CaptureToolbars();
+            var toolbars = CaptureToolbars();
+            foreach (var toolbar in toolbars)
+            {
+                workspace.Toolbars.Add(toolbar);
+            }
 
             // Capture layout data
             workspace.LayoutData = CaptureLayoutData();
 
-            _logger?.LogDebug("Captured current layout as workspace: {WorkspaceName}", name);
+            if (_logger != null)
+                LogWorkspaceCaptured(_logger, name, null);
             return workspace;
         }).Task;
     }
@@ -142,14 +277,14 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     {
         if (_dockingManager == null)
             throw new InvalidOperationException("Layout manager not initialized");
-        if (panel == null)
-            throw new ArgumentNullException(nameof(panel));
+        ArgumentNullException.ThrowIfNull(panel);
 
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             if (!_availablePanels.TryGetValue(panel.Id, out var panelContent))
             {
-                _logger?.LogWarning("Panel not found in registry: {PanelId}", panel.Id);
+                if (_logger != null)
+                    LogPanelNotFoundInRegistry(_logger, panel.Id, null);
                 return;
             }
 
@@ -157,7 +292,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             var pane = GetOrCreatePane(panel.Position.DockSide, panel.Position.PaneGroup);
             pane.Children.Add(anchorable);
 
-            _logger?.LogDebug("Added panel: {PanelId} to {DockSide}", panel.Id, panel.Position.DockSide);
+            if (_logger != null)
+                LogPanelAdded(_logger, panel.Id, panel.Position.DockSide.ToString(), null);
         }).Task;
     }
 
@@ -173,7 +309,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             if (anchorable != null)
             {
                 anchorable.Close();
-                _logger?.LogDebug("Removed panel: {PanelId}", panelId);
+                if (_logger != null)
+                    LogPanelRemoved(_logger, panelId, null);
             }
         }).Task;
     }
@@ -189,7 +326,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             var anchorable = FindAnchorable(panelId);
             if (anchorable == null)
             {
-                _logger?.LogWarning("Panel not found for move: {PanelId}", panelId);
+                if (_logger != null)
+                    LogPanelNotFoundForMove(_logger, panelId, null);
                 return;
             }
 
@@ -204,7 +342,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             var newPane = GetOrCreatePane(newPosition.DockSide, newPosition.PaneGroup);
             newPane.Children.Insert(Math.Min(newPosition.Order, newPane.Children.Count), anchorable);
 
-            _logger?.LogDebug("Moved panel: {PanelId} to {DockSide}", panelId, newPosition.DockSide);
+            if (_logger != null)
+                LogPanelMoved(_logger, panelId, newPosition.DockSide.ToString(), null);
         }).Task;
     }
 
@@ -224,7 +363,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
                 if (pane.DockHeight.Value != newSize.Height)
                     pane.DockHeight = new GridLength(newSize.Height);
 
-                _logger?.LogDebug("Resized panel: {PanelId} to {Width}x{Height}", panelId, newSize.Width, newSize.Height);
+                if (_logger != null)
+                    LogPanelResized(_logger, panelId, newSize.Width, newSize.Height, null);
             }
         }).Task;
     }
@@ -249,7 +389,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
                     anchorable.Hide();
                 }
 
-                _logger?.LogDebug("Set panel visibility: {PanelId} = {IsVisible}", panelId, isVisible);
+                if (_logger != null)
+                    LogPanelVisibilitySet(_logger, panelId, isVisible, null);
             }
         }).Task;
     }
@@ -261,7 +402,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         {
             // Implementation would depend on how toolbars are managed in the main window
             // This is a placeholder for the actual toolbar management logic
-            _logger?.LogDebug("Added toolbar: {ToolbarId}", toolbar.Id);
+            if (_logger != null)
+                LogToolbarAdded(_logger, toolbar.Id, null);
         }).Task;
     }
 
@@ -271,7 +413,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             // Placeholder for toolbar removal logic
-            _logger?.LogDebug("Removed toolbar: {ToolbarId}", toolbarId);
+            if (_logger != null)
+                LogToolbarRemoved(_logger, toolbarId, null);
         }).Task;
     }
 
@@ -281,7 +424,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             // Placeholder for toolbar move logic
-            _logger?.LogDebug("Moved toolbar: {ToolbarId} to {Position}", toolbarId, newPosition);
+            if (_logger != null)
+                LogToolbarMoved(_logger, toolbarId, newPosition.ToString(), null);
         }).Task;
     }
 
@@ -291,7 +435,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             // Placeholder for adding command to toolbar
-            _logger?.LogDebug("Added command {CommandId} to toolbar: {ToolbarId}", item.CommandId, toolbarId);
+            if (_logger != null)
+                LogCommandAddedToToolbar(_logger, item.CommandId ?? string.Empty, toolbarId, null);
         }).Task;
     }
 
@@ -301,17 +446,19 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             // Placeholder for removing command from toolbar
-            _logger?.LogDebug("Removed command {CommandId} from toolbar: {ToolbarId}", commandId, toolbarId);
+            if (_logger != null)
+                LogCommandRemovedFromToolbar(_logger, commandId, toolbarId, null);
         }).Task;
     }
 
     /// <inheritdoc />
-    public Task ReorderToolbarCommandsAsync(string toolbarId, List<string> commandOrder)
+    public Task ReorderToolbarCommandsAsync(string toolbarId, IList<string> commandOrder)
     {
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             // Placeholder for reordering toolbar commands
-            _logger?.LogDebug("Reordered commands in toolbar: {ToolbarId}", toolbarId);
+            if (_logger != null)
+                LogToolbarCommandsReordered(_logger, toolbarId, null);
         }).Task;
     }
 
@@ -323,7 +470,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             if (_availableToolbars.TryGetValue(toolbarId, out var toolbar))
             {
                 toolbar.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
-                _logger?.LogDebug("Set toolbar visibility: {ToolbarId} = {IsVisible}", toolbarId, isVisible);
+                if (_logger != null)
+                    LogToolbarVisibilitySet(_logger, toolbarId, isVisible, null);
             }
         }).Task;
     }
@@ -338,7 +486,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         {
             ClearLayout();
             CreateDefaultLayout();
-            _logger?.LogInformation("Reset to default layout");
+            if (_logger != null)
+                LogResetToDefaultLayout(_logger, null);
         }).Task;
     }
 
@@ -350,7 +499,7 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
         }
     }
 
-    private void ApplyPanels(List<PanelConfiguration> panels)
+    private void ApplyPanels(Collection<PanelConfiguration> panels)
     {
         foreach (var panel in panels.Where(p => p.IsVisible).OrderBy(p => p.Position.Order))
         {
@@ -362,12 +511,13 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
             }
             else
             {
-                _logger?.LogWarning("Panel not found in registry: {PanelId}", panel.Id);
+                if (_logger != null)
+                    LogPanelNotFoundInRegistry(_logger, panel.Id, null);
             }
         }
     }
 
-    private void ApplyToolbars(List<ToolbarConfiguration> toolbars)
+    private void ApplyToolbars(Collection<ToolbarConfiguration> toolbars)
     {
         foreach (var toolbar in toolbars.Where(t => t.IsVisible))
         {
@@ -383,7 +533,8 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
     {
         // In a real implementation, this would deserialize and apply
         // AvalonDock-specific layout data
-        _logger?.LogDebug("Applied layout data (placeholder implementation)");
+        if (_logger != null)
+            LogLayoutDataApplied(_logger, null);
     }
 
     private List<PanelConfiguration> CapturePanels()
@@ -455,15 +606,22 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
 
         foreach (var (toolbarId, toolbar) in _availableToolbars)
         {
-            toolbars.Add(new ToolbarConfiguration
+            var toolbarConfig = new ToolbarConfiguration
             {
                 Id = toolbarId,
                 Name = toolbarId,
                 IsVisible = toolbar.Visibility == Visibility.Visible,
                 Position = ToolbarPosition.Top, // Simplified for now
-                Order = 0,
-                Items = CaptureToolbarItems(toolbar)
-            });
+                Order = 0
+            };
+
+            var items = CaptureToolbarItems(toolbar);
+            foreach (var item in items)
+            {
+                toolbarConfig.Items.Add(item);
+            }
+
+            toolbars.Add(toolbarConfig);
         }
 
         return toolbars;
@@ -632,15 +790,15 @@ public class WorkspaceLayoutManager : IWorkspaceLayoutManager
 
     private PanelType DeterminePanelType(string panelId)
     {
-        return panelId.ToLowerInvariant() switch
+        return panelId.ToUpperInvariant() switch
         {
-            "toolpalette" => PanelType.ToolPalette,
-            "layerpanel" => PanelType.LayerPanel,
-            "properties" => PanelType.Properties,
-            "colorpicker" => PanelType.ColorPicker,
-            "brushsettings" => PanelType.BrushSettings,
-            "history" => PanelType.History,
-            "navigator" => PanelType.Navigator,
+            "TOOLPALETTE" => PanelType.ToolPalette,
+            "LAYERPANEL" => PanelType.LayerPanel,
+            "PROPERTIES" => PanelType.Properties,
+            "COLORPICKER" => PanelType.ColorPicker,
+            "BRUSHSETTINGS" => PanelType.BrushSettings,
+            "HISTORY" => PanelType.History,
+            "NAVIGATOR" => PanelType.Navigator,
             _ => PanelType.Custom
         };
     }

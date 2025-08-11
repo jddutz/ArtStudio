@@ -15,6 +15,9 @@ namespace ArtStudio.WPF.Services;
 /// </summary>
 public static class ServiceConfiguration
 {
+    // High-performance logging delegate
+    private static readonly Action<ILogger, Exception?> _logServicesInitializedDelegate =
+        LoggerMessage.Define(LogLevel.Information, new EventId(1, nameof(ServiceConfiguration)), "Services initialized successfully");
     /// <summary>
     /// Configures all services for the application
     /// </summary>
@@ -65,7 +68,7 @@ public static class ServiceConfiguration
 
         // Initialize workspace manager
         var workspaceManager = serviceProvider.GetRequiredService<IWorkspaceManager>();
-        await workspaceManager.InitializeAsync();
+        await workspaceManager.InitializeAsync().ConfigureAwait(false);
 
         // Initialize plugin manager
         var pluginManager = serviceProvider.GetRequiredService<IPluginManager>();
@@ -76,12 +79,12 @@ public static class ServiceConfiguration
 
         if (existingPaths.Length > 0)
         {
-            await pluginManager.LoadPluginsAsync(existingPaths);
+            await pluginManager.LoadPluginsAsync(existingPaths).ConfigureAwait(false);
         }
 
         // Log initialization complete
         var logger = serviceProvider.GetRequiredService<ILogger<Application>>();
-        logger.LogInformation("Services initialized successfully");
+        _logServicesInitializedDelegate(logger, null);
     }
 
     /// <summary>

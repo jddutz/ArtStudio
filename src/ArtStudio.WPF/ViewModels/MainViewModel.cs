@@ -19,7 +19,14 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isToolPaletteVisible = true;
     private bool _isLayerPaletteVisible = true;
     private bool _isPropertiesVisible = true;
-    private bool _isWorkspaceVisible = false;
+    private bool _isWorkspaceVisible;
+
+    // High-performance logging delegates
+    private static readonly Action<ILogger, string, Exception?> _logInfoDelegate =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(MainViewModel)), "{Message}");
+
+    private static readonly Action<ILogger, Exception, string, Exception?> _logErrorWithExceptionDelegate =
+        LoggerMessage.Define<Exception, string>(LogLevel.Error, new EventId(2, nameof(MainViewModel)), "Exception: {Exception}, Message: {Message}");
 
     public MainViewModel(
         IWorkspaceManager workspaceManager,
@@ -146,7 +153,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand CheckForUpdatesCommand { get; private set; } = null!;
 
     // Additional properties
-    private bool _isFullscreen = false;
+    private bool _isFullscreen;
     public bool IsFullscreen
     {
         get => _isFullscreen;
@@ -215,25 +222,37 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ExecuteNew()
     {
-        _logger?.LogInformation("Creating new document");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Creating new document", null);
+        }
         StatusText = "New document created";
     }
 
     private void ExecuteOpen()
     {
-        _logger?.LogInformation("Opening document");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Opening document", null);
+        }
         StatusText = "Opening document...";
     }
 
     private void ExecuteSave()
     {
-        _logger?.LogInformation("Saving document");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Saving document", null);
+        }
         StatusText = "Document saved";
     }
 
     private void ExecuteSaveAs()
     {
-        _logger?.LogInformation("Save As...");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Save As...", null);
+        }
         StatusText = "Save As...";
     }
 
@@ -244,13 +263,19 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ExecuteUndo()
     {
-        _logger?.LogInformation("Undo");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Undo", null);
+        }
         StatusText = "Undo";
     }
 
     private void ExecuteRedo()
     {
-        _logger?.LogInformation("Redo");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Redo", null);
+        }
         StatusText = "Redo";
     }
 
@@ -298,31 +323,46 @@ public class MainViewModel : INotifyPropertyChanged
     // New enhanced command implementations
     private void ExecuteNewCanvas()
     {
-        _logger?.LogInformation("Creating new canvas");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Creating new canvas", null);
+        }
         StatusText = "New canvas created";
     }
 
     private void ExecuteExport()
     {
-        _logger?.LogInformation("Exporting image");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Exporting image", null);
+        }
         StatusText = "Exporting image...";
     }
 
     private void ExecuteImport()
     {
-        _logger?.LogInformation("Importing image");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Importing image", null);
+        }
         StatusText = "Importing image...";
     }
 
     private void ExecuteClear()
     {
-        _logger?.LogInformation("Clearing selection");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Clearing selection", null);
+        }
         StatusText = "Selection cleared";
     }
 
     private void ExecuteSelectAll()
     {
-        _logger?.LogInformation("Selecting all");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Selecting all", null);
+        }
         StatusText = "All selected";
     }
 
@@ -396,7 +436,10 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ExecuteOpenPreferences()
     {
-        _logger?.LogInformation("Opening preferences");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Opening preferences", null);
+        }
         StatusText = "Opening preferences...";
     }
 
@@ -405,12 +448,18 @@ public class MainViewModel : INotifyPropertyChanged
     {
         try
         {
-            await _workspaceManager.SwitchToWorkspaceAsync("13bf9883-32d5-4402-93fb-187cafa30c52");
+            await _workspaceManager.SwitchToWorkspaceAsync("13bf9883-32d5-4402-93fb-187cafa30c52").ConfigureAwait(false);
             StatusText = "Switched to Drawing workspace";
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Failed to switch to Drawing workspace");
+            if (_logger != null)
+            {
+                _logErrorWithExceptionDelegate(_logger, ex, "Failed to switch to Drawing workspace", null);
+            }
             StatusText = "Failed to switch workspace";
         }
     }
@@ -419,12 +468,18 @@ public class MainViewModel : INotifyPropertyChanged
     {
         try
         {
-            await _workspaceManager.SwitchToWorkspaceAsync("a9244d44-4774-4b5c-b653-272f41285c56");
+            await _workspaceManager.SwitchToWorkspaceAsync("a9244d44-4774-4b5c-b653-272f41285c56").ConfigureAwait(false);
             StatusText = "Switched to Photo Editing workspace";
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Failed to switch to Photo Editing workspace");
+            if (_logger != null)
+            {
+                _logErrorWithExceptionDelegate(_logger, ex, "Failed to switch to Photo Editing workspace", null);
+            }
             StatusText = "Failed to switch workspace";
         }
     }
@@ -433,33 +488,48 @@ public class MainViewModel : INotifyPropertyChanged
     {
         try
         {
-            await _workspaceManager.SwitchToWorkspaceAsync("0e08c284-4f23-4736-810b-474a883760ea");
+            await _workspaceManager.SwitchToWorkspaceAsync("0e08c284-4f23-4736-810b-474a883760ea").ConfigureAwait(false);
             StatusText = "Switched to Compositing workspace";
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions to prevent UI crashes and provide user feedback
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Failed to switch to Compositing workspace");
+            if (_logger != null)
+            {
+                _logErrorWithExceptionDelegate(_logger, ex, "Failed to switch to Compositing workspace", null);
+            }
             StatusText = "Failed to switch workspace";
         }
     }
 
     private void ExecuteManageWorkspaces()
     {
-        _logger?.LogInformation("Opening workspace manager");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Opening workspace manager", null);
+        }
         StatusText = "Opening workspace manager...";
         // This would open a workspace management dialog
     }
 
     private void ExecuteCreateNewWorkspace()
     {
-        _logger?.LogInformation("Creating new workspace");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Creating new workspace", null);
+        }
         StatusText = "Creating new workspace...";
         // This would open a new workspace creation dialog
     }
 
     private void ExecuteResetCurrentWorkspace()
     {
-        _logger?.LogInformation("Resetting current workspace");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Resetting current workspace", null);
+        }
         StatusText = "Current workspace reset";
         // This would reset the current workspace to its default layout
     }
@@ -467,28 +537,40 @@ public class MainViewModel : INotifyPropertyChanged
     // Help command implementations
     private void ExecuteOpenUserGuide()
     {
-        _logger?.LogInformation("Opening user guide");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Opening user guide", null);
+        }
         StatusText = "Opening user guide...";
         // This would open the user guide in a browser or help viewer
     }
 
     private void ExecuteShowKeyboardShortcuts()
     {
-        _logger?.LogInformation("Showing keyboard shortcuts");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Showing keyboard shortcuts", null);
+        }
         StatusText = "Showing keyboard shortcuts...";
         // This would open a keyboard shortcuts dialog
     }
 
     private void ExecuteReportIssue()
     {
-        _logger?.LogInformation("Opening issue reporter");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Opening issue reporter", null);
+        }
         StatusText = "Opening issue reporter...";
         // This would open a bug report form or redirect to GitHub issues
     }
 
     private void ExecuteCheckForUpdates()
     {
-        _logger?.LogInformation("Checking for updates");
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, "Checking for updates", null);
+        }
         StatusText = "Checking for updates...";
         // This would check for application updates
     }

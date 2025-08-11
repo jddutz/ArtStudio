@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -25,7 +26,7 @@ public class ThemeManager : CoreThemeManager
 
     public string CurrentTheme => _currentTheme;
 
-    public string[] AvailableThemes => new[] { "Light", "Dark", "HighContrast" };
+    public IReadOnlyList<string> AvailableThemes => new[] { "Light", "Dark", "HighContrast" };
 
     public ThemeManager(IConfigurationManager configurationManager)
     {
@@ -53,6 +54,7 @@ public class ThemeManager : CoreThemeManager
 
     public void ApplyTheme(string themeName)
     {
+        ArgumentNullException.ThrowIfNull(themeName);
         if (_application == null || !ThemeExists(themeName))
             return;
 
@@ -69,7 +71,7 @@ public class ThemeManager : CoreThemeManager
             if (bundledTheme != null)
             {
                 // Update the base theme (Light/Dark) while preserving colors
-                var newBaseTheme = themeName.ToLower().Contains("dark") ? BaseTheme.Dark : BaseTheme.Light;
+                var newBaseTheme = themeName.Contains("dark", StringComparison.OrdinalIgnoreCase) ? BaseTheme.Dark : BaseTheme.Light;
                 if (bundledTheme.BaseTheme != newBaseTheme)
                 {
                     bundledTheme.BaseTheme = newBaseTheme;
@@ -106,19 +108,19 @@ public class ThemeManager : CoreThemeManager
 
         // Find our color resource dictionary
         var colorDict = _application.Resources.MergedDictionaries
-            .FirstOrDefault(d => d.Source?.OriginalString?.Contains("Colors.xaml") == true);
+            .FirstOrDefault(d => d.Source?.OriginalString?.Contains("Colors.xaml", StringComparison.OrdinalIgnoreCase) == true);
 
         if (colorDict == null) return;
 
         // Update specific colors based on theme
-        switch (themeName.ToLower())
+        switch (themeName.ToUpperInvariant())
         {
-            case "dark":
+            case "DARK":
                 colorDict["MaterialDesignPaper"] = new SolidColorBrush(Color.FromRgb(0x2D, 0x2D, 0x30));
                 colorDict["MaterialDesignCardBackground"] = new SolidColorBrush(Color.FromRgb(0x3E, 0x3E, 0x42));
                 colorDict["MaterialDesignToolBarBackground"] = new SolidColorBrush(Color.FromRgb(0x3E, 0x3E, 0x42));
                 break;
-            case "light":
+            case "LIGHT":
                 colorDict["MaterialDesignPaper"] = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
                 colorDict["MaterialDesignCardBackground"] = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5));
                 colorDict["MaterialDesignToolBarBackground"] = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
@@ -216,7 +218,10 @@ public class ThemeManager : CoreThemeManager
             };
             _application.Resources.MergedDictionaries.Add(themeResourceDictionary);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle missing or invalid theme files without crashing the application
         catch (Exception)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             // If custom theme doesn't exist, continue without it
         }
@@ -228,8 +233,8 @@ public class ThemeManager : CoreThemeManager
             return false;
 
         var sourceString = resourceDictionary.Source.ToString();
-        return sourceString.Contains("MaterialDesignThemes.Wpf") ||
-               sourceString.Contains("/Themes/") ||
+        return sourceString.Contains("MaterialDesignThemes.Wpf", StringComparison.OrdinalIgnoreCase) ||
+               sourceString.Contains("/Themes/", StringComparison.OrdinalIgnoreCase) ||
                resourceDictionary is BundledTheme;
     }
 
@@ -241,7 +246,10 @@ public class ThemeManager : CoreThemeManager
             var value = key?.GetValue("AppsUseLightTheme");
             return value is int intValue && intValue == 1;
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle registry access errors by defaulting to dark theme
         catch
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return false; // Default to dark theme if we can't determine
         }
@@ -262,7 +270,10 @@ public class ThemeManager : CoreThemeManager
                 }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // System events monitoring is not critical, gracefully continue without it
         catch
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             // System events monitoring is not critical, so we can continue without it
         }

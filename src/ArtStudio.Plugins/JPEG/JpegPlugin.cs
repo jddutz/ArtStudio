@@ -72,7 +72,10 @@ public class JpegImporter : ImporterPluginBase
                 Metadata = new ImportMetadata { Properties = { { "Format", "JPEG" } } }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ImportResult
             {
@@ -103,6 +106,7 @@ public class JpegExporter : ExporterPluginBase
 
     public override async Task<ExportResult> ExportAsync(ExportData data, string filePath, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(data);
         try
         {
             await Task.Yield();
@@ -112,9 +116,9 @@ public class JpegExporter : ExporterPluginBase
             // Composite layers (JPEG doesn't support transparency, so always flatten)
             foreach (var layer in data.Layers.Where(l => l.Visible))
             {
-                if (layer.ImageData.Length > 0)
+                if (layer.ImageData.Count > 0)
                 {
-                    using var ms = new MemoryStream(layer.ImageData);
+                    using var ms = new MemoryStream(layer.ImageData.ToArray());
                     using var layerImage = Image.FromStream(ms);
                     graphics.DrawImage(layerImage, layer.X, layer.Y, layer.Width, layer.Height);
                 }
@@ -122,7 +126,7 @@ public class JpegExporter : ExporterPluginBase
 
             // Save with quality setting
             var encoder = ImageCodecInfo.GetImageDecoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
-            var encoderParams = new EncoderParameters(1);
+            using var encoderParams = new EncoderParameters(1);
             encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, options?.Quality ?? 85L);
 
             bitmap.Save(filePath, encoder, encoderParams);
@@ -133,7 +137,10 @@ public class JpegExporter : ExporterPluginBase
                 Metadata = new ExportMetadata { FileSize = new FileInfo(filePath).Length }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ExportResult
             {

@@ -19,6 +19,16 @@ public class PluginCommandWrapper : ICommand
     private readonly IDictionary<string, object>? _parameters;
     private bool _isExecuting;
 
+    // High-performance logging delegates
+    private static readonly Action<ILogger, string, Exception?> _logCanExecuteErrorDelegate =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(1, nameof(PluginCommandWrapper)), "Error checking CanExecute for command {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> _logCommandCancelledDelegate =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(PluginCommandWrapper)), "Command {CommandId} was cancelled");
+
+    private static readonly Action<ILogger, string, Exception?> _logUnhandledErrorDelegate =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3, nameof(PluginCommandWrapper)), "Unhandled error executing command {CommandId}");
+
     /// <summary>
     /// Event fired when CanExecute status changes
     /// </summary>
@@ -77,9 +87,15 @@ public class PluginCommandWrapper : ICommand
 
             return _pluginCommand.CanExecute(_context, _parameters);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors to prevent UI crashes
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Error checking CanExecute for command {CommandId}", _pluginCommand.CommandId);
+            if (_logger != null)
+            {
+                _logCanExecuteErrorDelegate(_logger, _pluginCommand.CommandId, ex);
+            }
             return false;
         }
     }
@@ -115,13 +131,13 @@ public class PluginCommandWrapper : ICommand
             var progressContext = CreateProgressContext();
 
             // Prepare the command
-            await _pluginCommand.PrepareAsync(progressContext, cancellationToken);
+            await _pluginCommand.PrepareAsync(progressContext, cancellationToken).ConfigureAwait(false);
 
             // Execute the command
-            var result = await _pluginCommand.ExecuteAsync(progressContext, _parameters, cancellationToken);
+            var result = await _pluginCommand.ExecuteAsync(progressContext, _parameters, cancellationToken).ConfigureAwait(false);
 
             // Cleanup
-            await _pluginCommand.CleanupAsync(progressContext, cancellationToken);
+            await _pluginCommand.CleanupAsync(progressContext, cancellationToken).ConfigureAwait(false);
 
             // Notify completion
             var duration = DateTime.UtcNow - startTime;
@@ -129,13 +145,22 @@ public class PluginCommandWrapper : ICommand
         }
         catch (OperationCanceledException)
         {
-            _logger?.LogInformation("Command {CommandId} was cancelled", _pluginCommand.CommandId);
+            if (_logger != null)
+            {
+                _logCommandCancelledDelegate(_logger, _pluginCommand.CommandId, null);
+            }
             var duration = DateTime.UtcNow - startTime;
             OnExecutionCompleted(CommandResult.Failure("Command was cancelled"), duration);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors to prevent application crashes
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Unhandled error executing command {CommandId}", _pluginCommand.CommandId);
+            if (_logger != null)
+            {
+                _logUnhandledErrorDelegate(_logger, _pluginCommand.CommandId, ex);
+            }
             var duration = DateTime.UtcNow - startTime;
             OnExecutionCompleted(CommandResult.Failure($"Unhandled error: {ex.Message}", ex), duration);
         }
@@ -149,7 +174,7 @@ public class PluginCommandWrapper : ICommand
     /// <summary>
     /// Create a command context with progress reporting
     /// </summary>
-    private ICommandContext CreateProgressContext()
+    private ProgressCommandContext CreateProgressContext()
     {
         var progress = new Progress<CommandProgress>(OnProgressReported);
         return new ProgressCommandContext(_context, progress);
@@ -200,7 +225,7 @@ public class PluginCommandWrapper : ICommand
 /// <summary>
 /// Command context wrapper that adds progress reporting
 /// </summary>
-internal class ProgressCommandContext : ICommandContext
+internal sealed class ProgressCommandContext : ICommandContext
 {
     private readonly ICommandContext _baseContext;
 

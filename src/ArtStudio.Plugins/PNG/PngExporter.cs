@@ -1,7 +1,9 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ArtStudio.Core;
@@ -32,6 +34,7 @@ public class PngExporter : ExporterPluginBase
 
     public override async Task<ExportResult> ExportAsync(ExportData data, string filePath, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(data);
         try
         {
             using var bitmap = new Bitmap(data.Width, data.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -50,20 +53,20 @@ public class PngExporter : ExporterPluginBase
             // Composite layers
             if (options?.FlattenLayers != false) // Default to flattening for PNG
             {
-                await CompositeLayers(graphics, data.Layers, cancellationToken);
+                await CompositeLayers(graphics, data.Layers, cancellationToken).ConfigureAwait(false);
             }
             else if (data.Layers.Count > 0)
             {
                 // For non-flattened PNG, just use the top visible layer
-                var topLayer = data.Layers.FindLast(l => l.Visible);
+                var topLayer = data.Layers.LastOrDefault(l => l.Visible);
                 if (topLayer != null)
                 {
-                    await DrawLayer(graphics, topLayer, cancellationToken);
+                    await DrawLayer(graphics, topLayer, cancellationToken).ConfigureAwait(false);
                 }
             }
 
             // Save the image
-            await SaveImageAsync(bitmap, filePath, options, cancellationToken);
+            await SaveImageAsync(bitmap, filePath, options, cancellationToken).ConfigureAwait(false);
 
             return new ExportResult
             {
@@ -74,7 +77,10 @@ public class PngExporter : ExporterPluginBase
                 }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ExportResult
             {
@@ -84,27 +90,27 @@ public class PngExporter : ExporterPluginBase
         }
     }
 
-    private async Task CompositeLayers(Graphics graphics, List<ExportLayer> layers, CancellationToken cancellationToken)
+    private async Task CompositeLayers(Graphics graphics, Collection<ExportLayer> layers, CancellationToken cancellationToken)
     {
         foreach (var layer in layers)
         {
             if (!layer.Visible) continue;
 
-            await DrawLayer(graphics, layer, cancellationToken);
+            await DrawLayer(graphics, layer, cancellationToken).ConfigureAwait(false);
         }
     }
 
     private async Task DrawLayer(Graphics graphics, ExportLayer layer, CancellationToken cancellationToken)
     {
-        if (layer.ImageData.Length == 0) return;
+        if (layer.ImageData.Count == 0) return;
 
         await Task.Yield(); // Make it properly async
 
-        using var ms = new MemoryStream(layer.ImageData);
+        using var ms = new MemoryStream(layer.ImageData.ToArray());
         using var layerImage = Image.FromStream(ms);
 
         // Apply opacity and blend mode (simplified)
-        var imageAttributes = new ImageAttributes();
+        using var imageAttributes = new ImageAttributes();
         if (layer.Opacity < 1.0f)
         {
             var colorMatrix = new ColorMatrix
@@ -122,7 +128,7 @@ public class PngExporter : ExporterPluginBase
     {
         await Task.Yield(); // Make it properly async
 
-        var encoderParameters = new EncoderParameters(1);
+        using var encoderParameters = new EncoderParameters(1);
 
         // PNG doesn't have quality settings like JPEG, but we can set compression level
         // For simplicity, we'll just save with default settings

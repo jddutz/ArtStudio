@@ -8,7 +8,7 @@ namespace ArtStudio.Tests;
 public class WorkspaceManagerTests
 {
     [Fact]
-    public void WorkspaceManager_ShouldImplementInterface()
+    public void WorkspaceManagerShouldImplementInterface()
     {
         // Arrange
         var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
@@ -21,7 +21,7 @@ public class WorkspaceManagerTests
     }
 
     [Fact]
-    public async Task CreateWorkspaceAsync_ShouldNotThrow()
+    public async Task CreateWorkspaceAsyncShouldNotThrow()
     {
         // Arrange
         var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
@@ -33,7 +33,7 @@ public class WorkspaceManagerTests
     }
 
     [Fact]
-    public async Task SwitchToWorkspaceAsync_ShouldNotThrow()
+    public async Task SwitchToWorkspaceAsyncShouldNotThrow()
     {
         // Arrange
         var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
@@ -46,7 +46,7 @@ public class WorkspaceManagerTests
     }
 
     [Fact]
-    public async Task ResetWorkspaceAsync_ShouldNotThrow()
+    public async Task ResetWorkspaceAsyncShouldNotThrow()
     {
         // Arrange
         var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();

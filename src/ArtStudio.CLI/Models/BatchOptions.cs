@@ -8,7 +8,7 @@ public class BatchOptions
     /// <summary>
     /// Whether to continue executing remaining commands if one fails
     /// </summary>
-    public bool ContinueOnError { get; init; } = false;
+    public bool ContinueOnError { get; init; }
 
     /// <summary>
     /// Maximum number of parallel commands to execute (1 = sequential)
@@ -33,7 +33,7 @@ public class BatchOptions
     /// <summary>
     /// Whether to create a detailed execution log
     /// </summary>
-    public bool CreateExecutionLog { get; init; } = false;
+    public bool CreateExecutionLog { get; init; }
 
     /// <summary>
     /// Path to save the execution log

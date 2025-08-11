@@ -9,6 +9,20 @@ namespace ArtStudio.CLI.Commands;
 /// </summary>
 public class ExecuteCommandBuilder
 {
+    private static readonly string[] ParametersAliases = ["--param", "-p"];
+    private static readonly string[] TimeoutAliases = ["--timeout", "-t"];
+    private static readonly string[] DryRunAliases = ["--dry-run", "-n"];
+    private static readonly string[] FormatAliases = ["--format", "-f"];
+
+    // LoggerMessage delegates for high-performance logging
+    private static readonly Action<ILogger, string, Exception?> LogExecuteCommandError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3001, nameof(LogExecuteCommandError)),
+            "Error executing command {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogInvalidParameterFormat =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(3002, nameof(LogInvalidParameterFormat)),
+            "Invalid parameter format: {Parameter}. Expected key=value");
+
     private readonly CommandExecutor _commandExecutor;
     private readonly ArgumentParser _argumentParser;
     private readonly OutputFormatter _outputFormatter;
@@ -44,7 +58,7 @@ public class ExecuteCommandBuilder
 
         // Parameters option
         var parametersOption = new Option<string[]>(
-            aliases: new[] { "--param", "-p" },
+            aliases: ParametersAliases,
             description: "Command parameters in key=value format")
         {
             AllowMultipleArgumentsPerToken = true
@@ -53,19 +67,19 @@ public class ExecuteCommandBuilder
 
         // Timeout option
         var timeoutOption = new Option<int?>(
-            aliases: new[] { "--timeout", "-t" },
+            aliases: TimeoutAliases,
             description: "Timeout in milliseconds");
         executeCommand.AddOption(timeoutOption);
 
         // Dry run option
         var dryRunOption = new Option<bool>(
-            aliases: new[] { "--dry-run", "-n" },
+            aliases: DryRunAliases,
             description: "Show what would be executed without actually running the command");
         executeCommand.AddOption(dryRunOption);
 
         // Output format option
         var formatOption = new Option<string>(
-            aliases: new[] { "--format", "-f" },
+            aliases: FormatAliases,
             getDefaultValue: () => "text",
             description: "Output format (text, json, yaml, table)");
         executeCommand.AddOption(formatOption);
@@ -95,7 +109,7 @@ public class ExecuteCommandBuilder
                     ? new CancellationTokenSource(TimeSpan.FromMilliseconds(timeout.Value))
                     : new CancellationTokenSource();
 
-                var result = await _commandExecutor.ExecuteAsync(commandId, parsedParams, cts.Token);
+                var result = await _commandExecutor.ExecuteAsync(commandId, parsedParams, cts.Token).ConfigureAwait(false);
 
                 var outputFormat = Enum.TryParse<OutputFormatter.OutputFormat>(format, true, out var fmt)
                     ? fmt
@@ -106,10 +120,17 @@ public class ExecuteCommandBuilder
 
                 Environment.ExitCode = result.IsSuccess ? 0 : 1;
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            // Intentionally catching all exceptions in CLI command handler to provide
+            // user-friendly error messages and appropriate exit codes
             catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
-                _logger.LogError(ex, "Error executing command {CommandId}", commandId);
+                LogExecuteCommandError(_logger, commandId, ex);
+#pragma warning disable CA1849 // Call async methods when in an async method
+                // Intentionally using synchronous Console.Error.WriteLine for immediate error feedback in CLI
                 Console.Error.WriteLine($"Error: {ex.Message}");
+#pragma warning restore CA1849 // Call async methods when in an async method
                 Environment.ExitCode = 1;
             }
         },
@@ -131,10 +152,10 @@ public class ExecuteCommandBuilder
 
         foreach (var param in parameters)
         {
-            var equalIndex = param.IndexOf('=');
+            var equalIndex = param.IndexOf('=', StringComparison.Ordinal);
             if (equalIndex <= 0 || equalIndex == param.Length - 1)
             {
-                _logger.LogWarning("Invalid parameter format: {Parameter}. Expected key=value", param);
+                LogInvalidParameterFormat(_logger, param, null);
                 continue;
             }
 

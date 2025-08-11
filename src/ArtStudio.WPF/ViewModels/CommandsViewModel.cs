@@ -20,6 +20,16 @@ public class CommandsViewModel
     private readonly ILogger<CommandsViewModel>? _logger;
     private readonly Dictionary<string, PluginCommandWrapper> _commandWrappers = new();
 
+    // High-performance logging delegates
+    private static readonly Action<ILogger, string, Exception?> _logCommandRegisteredDelegate =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, nameof(CommandsViewModel)), "Command registered in view model: {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> _logCommandUnregisteredDelegate =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(CommandsViewModel)), "Command unregistered in view model: {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> _logCommandNotFoundDelegate =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(3, nameof(CommandsViewModel)), "Command not found: {CommandId}");
+
     /// <summary>
     /// File menu commands
     /// </summary>
@@ -119,7 +129,7 @@ public class CommandsViewModel
     /// <summary>
     /// Create command execution context
     /// </summary>
-    private ICommandContext CreateCommandContext()
+    private CommandContext CreateCommandContext()
     {
         var editorService = _serviceProvider.GetRequiredService<IEditorService>();
         var configManager = _serviceProvider.GetRequiredService<IConfigurationManager>();
@@ -137,7 +147,10 @@ public class CommandsViewModel
     /// </summary>
     private void OnCommandRegistered(object? sender, CommandRegisteredEventArgs e)
     {
-        _logger?.LogDebug("Command registered in view model: {CommandId}", e.Command.CommandId);
+        if (_logger != null)
+        {
+            _logCommandRegisteredDelegate(_logger, e.Command.CommandId, null);
+        }
         // The wrapper will be created lazily when the command is first accessed
     }
 
@@ -146,7 +159,10 @@ public class CommandsViewModel
     /// </summary>
     private void OnCommandUnregistered(object? sender, CommandUnregisteredEventArgs e)
     {
-        _logger?.LogDebug("Command unregistered in view model: {CommandId}", e.CommandId);
+        if (_logger != null)
+        {
+            _logCommandUnregisteredDelegate(_logger, e.CommandId, null);
+        }
 
         if (_commandWrappers.TryGetValue(e.CommandId, out var wrapper))
         {
@@ -176,7 +192,10 @@ public class CommandsViewModel
         var command = _commandRegistry.GetCommand(commandId);
         if (command == null)
         {
-            _logger?.LogWarning("Command not found: {CommandId}", commandId);
+            if (_logger != null)
+            {
+                _logCommandNotFoundDelegate(_logger, commandId, null);
+            }
             return;
         }
 
@@ -193,11 +212,11 @@ public class CommandsViewModel
             parameterizedWrapper.ExecutionCompleted += (s, e) => CommandExecutionCompleted?.Invoke(this, e);
             parameterizedWrapper.ProgressReported += (s, e) => CommandProgressReported?.Invoke(this, e);
 
-            await parameterizedWrapper.ExecuteAsync();
+            await parameterizedWrapper.ExecuteAsync().ConfigureAwait(false);
         }
         else
         {
-            await wrapper.ExecuteAsync();
+            await wrapper.ExecuteAsync().ConfigureAwait(false);
         }
     }
 

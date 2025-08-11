@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using ArtStudio.Core;
@@ -30,9 +31,9 @@ public class HelpProvider
             return $"Command '{commandId}' not found";
 
         var help = new StringBuilder();
-        help.AppendLine($"Command: {command.CommandId}");
-        help.AppendLine($"Name: {command.DisplayName}");
-        help.AppendLine($"Description: {command.Description}");
+        help.AppendLine(CultureInfo.InvariantCulture, $"Command: {command.CommandId}");
+        help.AppendLine(CultureInfo.InvariantCulture, $"Name: {command.DisplayName}");
+        help.AppendLine(CultureInfo.InvariantCulture, $"Description: {command.Description}");
 
         if (!string.IsNullOrWhiteSpace(command.DetailedInstructions))
         {
@@ -43,11 +44,11 @@ public class HelpProvider
 
         if (!string.IsNullOrWhiteSpace(command.KeyboardShortcut))
         {
-            help.AppendLine($"Keyboard Shortcut: {command.KeyboardShortcut}");
+            help.AppendLine(CultureInfo.InvariantCulture, $"Keyboard Shortcut: {command.KeyboardShortcut}");
         }
 
-        help.AppendLine($"Category: {command.Category}");
-        help.AppendLine($"Priority: {command.Priority}");
+        help.AppendLine(CultureInfo.InvariantCulture, $"Category: {command.Category}");
+        help.AppendLine(CultureInfo.InvariantCulture, $"Priority: {command.Priority}");
 
         if (command.Parameters?.Count > 0)
         {
@@ -55,41 +56,41 @@ public class HelpProvider
             help.AppendLine("Parameters:");
             foreach (var param in command.Parameters.Values.OrderBy(p => p.IsRequired ? 0 : 1).ThenBy(p => p.Name))
             {
-                help.Append($"  --{param.Name}");
+                help.Append(CultureInfo.InvariantCulture, $"  --{param.Name}");
 
                 if (param.Type != null)
-                    help.Append($" ({param.Type.Name})");
+                    help.Append(CultureInfo.InvariantCulture, $" ({param.Type.Name})");
 
                 if (param.IsRequired)
                     help.Append(" [required]");
 
                 if (param.DefaultValue != null)
-                    help.Append($" [default: {param.DefaultValue}]");
+                    help.Append(CultureInfo.InvariantCulture, $" [default: {param.DefaultValue}]");
 
                 help.AppendLine();
 
                 if (!string.IsNullOrWhiteSpace(param.Description))
                 {
-                    help.AppendLine($"    {param.Description}");
+                    help.AppendLine(CultureInfo.InvariantCulture, $"    {param.Description}");
                 }
 
                 if (param.ValidValues?.Count > 0)
                 {
-                    help.AppendLine($"    Valid values: {string.Join(", ", param.ValidValues)}");
+                    help.AppendLine(CultureInfo.InvariantCulture, $"    Valid values: {string.Join(", ", param.ValidValues)}");
                 }
             }
         }
 
         help.AppendLine();
         help.AppendLine("Usage:");
-        help.Append($"  artstudio execute {command.CommandId}");
+        help.Append(CultureInfo.InvariantCulture, $"  artstudio execute {command.CommandId}");
 
         if (command.Parameters?.Count > 0)
         {
             var requiredParams = command.Parameters.Values.Where(p => p.IsRequired);
             foreach (var param in requiredParams)
             {
-                help.Append($" --{param.Name} <value>");
+                help.Append(CultureInfo.InvariantCulture, $" --{param.Name} <value>");
             }
 
             var optionalParams = command.Parameters.Values.Where(p => !p.IsRequired);
@@ -134,14 +135,14 @@ public class HelpProvider
             if (categoryCommands.Count == 0)
                 continue;
 
-            help.AppendLine($"{category}:");
+            help.AppendLine(CultureInfo.InvariantCulture, $"{category}:");
             foreach (var command in categoryCommands.OrderBy(c => c.Priority).ThenBy(c => c.DisplayName))
             {
-                help.Append($"  {command.CommandId}");
-                help.Append($" - {command.Description}");
+                help.Append(CultureInfo.InvariantCulture, $"  {command.CommandId}");
+                help.Append(CultureInfo.InvariantCulture, $" - {command.Description}");
 
                 if (!string.IsNullOrWhiteSpace(command.KeyboardShortcut))
-                    help.Append($" ({command.KeyboardShortcut})");
+                    help.Append(CultureInfo.InvariantCulture, $" ({command.KeyboardShortcut})");
 
                 help.AppendLine();
             }
@@ -155,7 +156,10 @@ public class HelpProvider
     /// <summary>
     /// Get general application help
     /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    // Keeping as instance method to support dependency injection and unit testing
     public string GetApplicationHelp()
+#pragma warning restore CA1822 // Mark members as static
     {
         var help = new StringBuilder();
         help.AppendLine("ArtStudio CLI - Command-line interface for ArtStudio automation");
@@ -196,14 +200,14 @@ public class HelpProvider
             return $"Command '{commandId}' not found";
 
         var usage = new StringBuilder();
-        usage.Append($"artstudio execute {command.CommandId}");
+        usage.Append(CultureInfo.InvariantCulture, $"artstudio execute {command.CommandId}");
 
         if (command.Parameters?.Count > 0)
         {
             var requiredParams = command.Parameters.Values.Where(p => p.IsRequired);
             foreach (var param in requiredParams.OrderBy(p => p.Name))
             {
-                usage.Append($" --{param.Name} <{param.Type?.Name?.ToLowerInvariant() ?? "value"}>");
+                usage.Append(CultureInfo.InvariantCulture, $" --{param.Name} <{param.Type?.Name?.ToUpperInvariant() ?? "value"}>");
             }
 
             var optionalParams = command.Parameters.Values.Where(p => !p.IsRequired);

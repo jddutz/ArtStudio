@@ -39,6 +39,10 @@ public class CommandExecutor
         LoggerMessage.Define<string, string?>(LogLevel.Error, new EventId(3005, nameof(LogCommandFailure)),
             "Command '{CommandId}' failed: {Message}");
 
+    private static readonly Action<ILogger, string, Exception?> LogCommandExecutionError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3006, nameof(LogCommandExecutionError)),
+            "Error executing command {CommandId}");
+
     /// <summary>
     /// Initialize the command executor
     /// </summary>
@@ -105,9 +109,13 @@ public class CommandExecutor
 
             return result;
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Intentionally catching all exceptions to return structured CommandResult.Failure
+        // instead of allowing exceptions to propagate and crash the CLI
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger.LogError(ex, "Error executing command {CommandId}", commandId);
+            LogCommandExecutionError(_logger, commandId, ex);
             return CommandResult.Failure($"Error executing command: {ex.Message}", ex);
         }
     }

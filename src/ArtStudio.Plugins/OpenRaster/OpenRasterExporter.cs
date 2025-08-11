@@ -32,6 +32,7 @@ public class OpenRasterExporter : ExporterPluginBase
 
     public override async Task<ExportResult> ExportAsync(ExportData data, string filePath, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(data);
         try
         {
             using var fileStream = File.Create(filePath);
@@ -42,7 +43,7 @@ public class OpenRasterExporter : ExporterPluginBase
             using (var mimetypeStream = mimetypeEntry.Open())
             using (var writer = new StreamWriter(mimetypeStream))
             {
-                await writer.WriteAsync("image/openraster");
+                await writer.WriteAsync("image/openraster").ConfigureAwait(false);
             }
 
             // Create stack.xml
@@ -69,7 +70,7 @@ public class OpenRasterExporter : ExporterPluginBase
             var stackEntry = archive.CreateEntry("stack.xml");
             using (var stackStream = stackEntry.Open())
             {
-                await stackXml.SaveAsync(stackStream, SaveOptions.None, cancellationToken);
+                await stackXml.SaveAsync(stackStream, SaveOptions.None, cancellationToken).ConfigureAwait(false);
             }
 
             // Create data directory and save layer images
@@ -78,7 +79,7 @@ public class OpenRasterExporter : ExporterPluginBase
                 var layer = data.Layers[i];
                 var layerEntry = archive.CreateEntry($"data/{layer.Name}.png");
                 using var layerStream = layerEntry.Open();
-                await layerStream.WriteAsync(layer.ImageData, cancellationToken);
+                await layerStream.WriteAsync(layer.ImageData.ToArray(), cancellationToken).ConfigureAwait(false);
             }
 
             return new ExportResult
@@ -90,7 +91,10 @@ public class OpenRasterExporter : ExporterPluginBase
                 }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ExportResult
             {

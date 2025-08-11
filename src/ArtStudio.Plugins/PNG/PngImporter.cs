@@ -34,7 +34,7 @@ public class PngImporter : ImporterPluginBase
     {
         try
         {
-            using var image = await LoadImageAsync(filePath, cancellationToken);
+            using var image = await LoadImageAsync(filePath, cancellationToken).ConfigureAwait(false);
 
             var document = new ImportedDocument
             {
@@ -78,7 +78,10 @@ public class PngImporter : ImporterPluginBase
                 }
             };
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle plugin errors by returning failure result instead of crashing
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ImportResult
             {

@@ -12,7 +12,7 @@ namespace ArtStudio.CLI;
 /// <summary>
 /// Main entry point for ArtStudio CLI application
 /// </summary>
-internal class Program
+internal sealed partial class Program
 {
     /// <summary>
     /// Main entry point
@@ -21,6 +21,8 @@ internal class Program
     /// <returns>Exit code</returns>
     public static async Task<int> Main(string[] args)
     {
+        ArgumentNullException.ThrowIfNull(args);
+
         // Create host builder for dependency injection
         var hostBuilder = Host.CreateDefaultBuilder(args)
             .ConfigureServices(ConfigureServices)
@@ -32,14 +34,19 @@ internal class Program
         try
         {
             var cliApp = host.Services.GetRequiredService<CliApplication>();
-            return await cliApp.RunAsync(args);
+            return await cliApp.RunAsync(args).ConfigureAwait(false);
         }
+#pragma warning disable CA1031 // Do not catch general exception types - appropriate for top-level error handling
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             var logger = host.Services.GetService<ILogger<Program>>();
-            logger?.LogError(ex, "Unhandled exception in CLI application");
+            if (logger != null)
+            {
+                LogError(logger, ex);
+            }
 
-            Console.Error.WriteLine($"Error: {ex.Message}");
+            await Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
             return 1;
         }
     }
@@ -96,4 +103,7 @@ internal class Program
 
         logging.SetMinimumLevel(logLevel);
     }
+
+    [LoggerMessage(0, LogLevel.Error, "Unhandled exception in CLI application")]
+    private static partial void LogError(ILogger logger, Exception ex);
 }

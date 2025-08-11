@@ -64,7 +64,10 @@ public class GifImporter : ImporterPluginBase
 
             return new ImportResult { Success = true, Document = document };
         }
+        // Gracefully handle plugin errors by returning failure result instead of crashing
+#pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ImportResult { Success = false, ErrorMessage = ex.Message };
         }
@@ -91,6 +94,7 @@ public class GifExporter : ExporterPluginBase
 
     public override async Task<ExportResult> ExportAsync(ExportData data, string filePath, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(data);
         try
         {
             await Task.Yield();
@@ -99,9 +103,9 @@ public class GifExporter : ExporterPluginBase
 
             foreach (var layer in data.Layers.Where(l => l.Visible))
             {
-                if (layer.ImageData.Length > 0)
+                if (layer.ImageData.Count > 0)
                 {
-                    using var ms = new MemoryStream(layer.ImageData);
+                    using var ms = new MemoryStream(layer.ImageData.ToArray());
                     using var layerImage = Image.FromStream(ms);
                     graphics.DrawImage(layerImage, layer.X, layer.Y, layer.Width, layer.Height);
                 }
@@ -110,7 +114,10 @@ public class GifExporter : ExporterPluginBase
             bitmap.Save(filePath, ImageFormat.Gif);
             return new ExportResult { Success = true };
         }
+        // Gracefully handle plugin errors by returning failure result instead of crashing
+#pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return new ExportResult { Success = false, ErrorMessage = ex.Message };
         }

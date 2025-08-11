@@ -69,7 +69,7 @@ public class AsyncRelayCommand : ICommand
 
         try
         {
-            await _execute();
+            await _execute().ConfigureAwait(false);
         }
         finally
         {
@@ -119,7 +119,7 @@ public class AsyncRelayCommand<T> : ICommand
 
         try
         {
-            await _execute((T?)parameter);
+            await _execute((T?)parameter).ConfigureAwait(false);
         }
         finally
         {

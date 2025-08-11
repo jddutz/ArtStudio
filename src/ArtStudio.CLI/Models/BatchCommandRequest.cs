@@ -25,7 +25,7 @@ public class BatchCommandRequest
     /// <summary>
     /// Whether to continue batch execution if this command fails
     /// </summary>
-    public bool ContinueOnError { get; init; } = false;
+    public bool ContinueOnError { get; init; }
 
     /// <summary>
     /// Timeout for this command in milliseconds

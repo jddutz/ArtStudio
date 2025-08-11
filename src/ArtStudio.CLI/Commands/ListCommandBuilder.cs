@@ -9,6 +9,11 @@ namespace ArtStudio.CLI.Commands;
 /// </summary>
 public class ListCommandBuilder
 {
+    private static readonly string[] CategoryAliases = ["--category", "-c"];
+    private static readonly string[] EnabledOnlyAliases = ["--enabled-only", "-e"];
+    private static readonly string[] DetailsAliases = ["--details", "-d"];
+    private static readonly string[] FormatAliases = ["--format", "-f"];
+
     private readonly ICommandRegistry _commandRegistry;
     private readonly OutputFormatter _outputFormatter;
 
@@ -32,7 +37,7 @@ public class ListCommandBuilder
 
         // Category option
         var categoryOption = new Option<string?>(
-            aliases: new[] { "--category", "-c" },
+            aliases: CategoryAliases,
             description: "Filter commands by category");
 
         // Add valid categories to the option
@@ -43,19 +48,19 @@ public class ListCommandBuilder
 
         // Enabled only option
         var enabledOnlyOption = new Option<bool>(
-            aliases: new[] { "--enabled-only", "-e" },
+            aliases: EnabledOnlyAliases,
             description: "Show only enabled commands");
         listCommand.AddOption(enabledOnlyOption);
 
         // Show details option
         var detailsOption = new Option<bool>(
-            aliases: new[] { "--details", "-d" },
+            aliases: DetailsAliases,
             description: "Show detailed information for each command");
         listCommand.AddOption(detailsOption);
 
         // Output format option
         var formatOption = new Option<string>(
-            aliases: new[] { "--format", "-f" },
+            aliases: FormatAliases,
             getDefaultValue: () => "text",
             description: "Output format (text, json, yaml, table)");
         listCommand.AddOption(formatOption);
@@ -130,7 +135,11 @@ public class ListCommandBuilder
 
                 Environment.ExitCode = 0;
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            // Intentionally catching all exceptions in CLI command handler to provide
+            // user-friendly error messages and appropriate exit codes
             catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
                 Console.Error.WriteLine($"Error: {ex.Message}");
                 Environment.ExitCode = 1;

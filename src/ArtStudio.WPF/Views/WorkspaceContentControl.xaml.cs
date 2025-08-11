@@ -11,10 +11,12 @@ namespace ArtStudio.WPF.Views
         }
 
         // Expose the WorkspaceAnchorable for the MainWindow to access
+#pragma warning disable CA1024 // Use properties where appropriate
         public AvalonDock.Layout.LayoutAnchorable? GetWorkspaceAnchorable() =>
             WorkspaceAnchorable;
 
         // Expose the DockingManager for layout manager initialization
         public DockingManager? GetDockingManager() => dockManager;
+#pragma warning restore CA1024
     }
 }

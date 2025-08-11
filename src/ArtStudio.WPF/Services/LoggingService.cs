@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.IO;
 
@@ -13,6 +14,28 @@ public static class LoggingService
 {
     private static Microsoft.Extensions.Logging.ILogger? _logger;
     private static readonly object _lock = new();
+
+    // High-performance logging delegates
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logDebugDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(1, nameof(LogDebug)), "[{Context}] {Message}");
+
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logInfoDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2, nameof(LogInfo)), "[{Context}] {Message}");
+
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logWarningDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(3, nameof(LogWarning)), "[{Context}] {Message}");
+
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logErrorDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Error, new EventId(4, nameof(LogError)), "[{Context}] {Message}");
+
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logErrorWithExceptionDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Error, new EventId(5, nameof(LogError)), "[{Context}] {Message}");
+
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logCriticalDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Critical, new EventId(6, nameof(LogCritical)), "[{Context}] {Message}");
+
+    private static readonly Action<Microsoft.Extensions.Logging.ILogger, string, string, Exception?> _logCriticalWithExceptionDelegate =
+        LoggerMessage.Define<string, string>(LogLevel.Critical, new EventId(7, nameof(LogCritical)), "[{Context}] {Message}");
 
     /// <summary>
     /// Initialize the logging system with SQLite journal and debug console
@@ -35,20 +58,24 @@ public static class LoggingService
                 .WriteTo.SQLite(
                     sqliteDbPath: Path.Combine(logsDir, "journal.db"),
                     tableName: "Logs",
-                    restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
+                    restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information,
+                    formatProvider: CultureInfo.InvariantCulture)
                 .WriteTo.File(
                     path: Path.Combine(logsDir, "artstudio-.log"),
                     rollingInterval: Serilog.RollingInterval.Day,
                     retainedFileCountLimit: 30,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    formatProvider: CultureInfo.InvariantCulture)
                 .WriteTo.Debug(
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    formatProvider: CultureInfo.InvariantCulture);
 
             // Add console output in debug mode
             if (Debugger.IsAttached)
             {
                 loggerConfig.WriteTo.Console(
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    formatProvider: CultureInfo.InvariantCulture);
             }
 
             Log.Logger = loggerConfig.CreateLogger();
@@ -77,7 +104,10 @@ public static class LoggingService
             var version = assembly.GetName().Version;
             return version?.ToString() ?? "Unknown";
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Gracefully handle reflection errors by returning fallback value
         catch
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             return "Unknown";
         }
@@ -87,36 +117,53 @@ public static class LoggingService
     {
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
-        _logger?.LogDebug("[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logDebugDelegate(_logger, context, message, null);
+        }
     }
 
     public static void LogInfo(string message, [CallerMemberName] string? memberName = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
     {
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
-        _logger?.LogInformation("[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logInfoDelegate(_logger, context, message, null);
+        }
     }
 
     public static void LogWarning(string message, [CallerMemberName] string? memberName = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
     {
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
-        _logger?.LogWarning("[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logWarningDelegate(_logger, context, message, null);
+        }
     }
 
     public static void LogError(string message, [CallerMemberName] string? memberName = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
     {
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
-        _logger?.LogError("[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logErrorDelegate(_logger, context, message, null);
+        }
     }
 
     public static void LogError(Exception exception, string message, [CallerMemberName] string? memberName = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
     {
+        ArgumentNullException.ThrowIfNull(exception);
+
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
 
-        _logger?.LogError(exception, "[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logErrorWithExceptionDelegate(_logger, context, message, exception);
+        }
 
         // In debug mode, also output detailed exception information to debug console
         if (Debugger.IsAttached)
@@ -143,15 +190,23 @@ public static class LoggingService
     {
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
-        _logger?.LogCritical("[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logCriticalDelegate(_logger, context, message, null);
+        }
     }
 
     public static void LogCritical(Exception exception, string message, [CallerMemberName] string? memberName = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
     {
+        ArgumentNullException.ThrowIfNull(exception);
+
         EnsureInitialized();
         var context = $"{Path.GetFileNameWithoutExtension(filePath)}.{memberName}:{lineNumber}";
 
-        _logger?.LogCritical(exception, "[{Context}] {Message}", context, message);
+        if (_logger != null)
+        {
+            _logCriticalWithExceptionDelegate(_logger, context, message, exception);
+        }
 
         // In debug mode, also output detailed exception information to debug console
         if (Debugger.IsAttached)

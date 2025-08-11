@@ -12,6 +12,19 @@ public class CliApplication
     private readonly RootCommandBuilder _rootCommandBuilder;
     private readonly ILogger<CliApplication> _logger;
 
+    // LoggerMessage delegates for high-performance logging
+    private static readonly Action<ILogger, int, Exception?> LogApplicationStarting =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(2001, nameof(LogApplicationStarting)),
+            "Starting ArtStudio CLI application with {ArgumentCount} arguments");
+
+    private static readonly Action<ILogger, int, Exception?> LogApplicationCompleted =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(2002, nameof(LogApplicationCompleted)),
+            "CLI application completed with exit code {ExitCode}");
+
+    private static readonly Action<ILogger, Exception?> LogApplicationError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(2003, nameof(LogApplicationError)),
+            "Error running CLI application");
+
     /// <summary>
     /// Initialize the CLI application
     /// </summary>
@@ -30,7 +43,9 @@ public class CliApplication
     /// <returns>Exit code</returns>
     public async Task<int> RunAsync(string[] args)
     {
-        _logger.LogDebug("Starting ArtStudio CLI application with {ArgumentCount} arguments", args.Length);
+        ArgumentNullException.ThrowIfNull(args);
+
+        LogApplicationStarting(_logger, args.Length, null);
 
         try
         {
@@ -38,14 +53,18 @@ public class CliApplication
             var rootCommand = _rootCommandBuilder.Build();
 
             // Execute the command line
-            var result = await rootCommand.InvokeAsync(args);
+            var result = await rootCommand.InvokeAsync(args).ConfigureAwait(false);
 
-            _logger.LogDebug("CLI application completed with exit code {ExitCode}", result);
+            LogApplicationCompleted(_logger, result, null);
             return result;
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Intentionally catching all exceptions at application entry point to ensure graceful shutdown
+        // and appropriate exit codes for CLI tool
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger.LogError(ex, "Error running CLI application");
+            LogApplicationError(_logger, ex);
             return 1;
         }
     }

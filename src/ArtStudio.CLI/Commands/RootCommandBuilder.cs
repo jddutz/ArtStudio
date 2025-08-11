@@ -8,6 +8,11 @@ namespace ArtStudio.CLI.Commands;
 /// </summary>
 public class RootCommandBuilder
 {
+    private static readonly string[] VerboseAliases = ["--verbose", "-v"];
+    private static readonly string[] QuietAliases = ["--quiet", "-q"];
+    private static readonly string[] ConfigAliases = ["--config", "-c"];
+    private static readonly string[] FormatAliases = ["--format", "-f"];
+
     private readonly ExecuteCommandBuilder _executeCommandBuilder;
     private readonly BatchCommandBuilder _batchCommandBuilder;
     private readonly ListCommandBuilder _listCommandBuilder;
@@ -37,19 +42,19 @@ public class RootCommandBuilder
 
         // Global options
         var verboseOption = new Option<bool>(
-            aliases: new[] { "--verbose", "-v" },
+            aliases: VerboseAliases,
             description: "Enable verbose logging");
 
         var quietOption = new Option<bool>(
-            aliases: new[] { "--quiet", "-q" },
+            aliases: QuietAliases,
             description: "Suppress output except errors");
 
         var configOption = new Option<string?>(
-            aliases: new[] { "--config", "-c" },
+            aliases: ConfigAliases,
             description: "Specify configuration file path");
 
         var outputFormatOption = new Option<string>(
-            aliases: new[] { "--format", "-f" },
+            aliases: FormatAliases,
             getDefaultValue: () => "text",
             description: "Output format (text, json, yaml, table)");
 

@@ -11,6 +11,21 @@ namespace ArtStudio.CLI.Commands;
 /// </summary>
 public class BatchCommandBuilder
 {
+    private static readonly string[] ContinueOnErrorAliases = ["--continue-on-error", "-c"];
+    private static readonly string[] ParallelAliases = ["--parallel", "-p"];
+    private static readonly string[] TimeoutAliases = ["--timeout", "-t"];
+    private static readonly string[] ValidateAliases = ["--validate", "-v"];
+    private static readonly string[] LogFileAliases = ["--log-file", "-l"];
+    private static readonly string[] DryRunAliases = ["--dry-run", "-n"];
+    private static readonly string[] FormatAliases = ["--format", "-f"];
+
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+    // LoggerMessage delegates for high-performance logging
+    private static readonly Action<ILogger, string, Exception?> LogBatchExecutionError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(4001, nameof(LogBatchExecutionError)),
+            "Error executing batch file {BatchFile}");
+
     private readonly BatchProcessor _batchProcessor;
     private readonly ArgumentParser _argumentParser;
     private readonly OutputFormatter _outputFormatter;
@@ -46,45 +61,45 @@ public class BatchCommandBuilder
 
         // Continue on error option
         var continueOnErrorOption = new Option<bool>(
-            aliases: new[] { "--continue-on-error", "-c" },
+            aliases: ContinueOnErrorAliases,
             description: "Continue executing remaining commands if one fails");
         batchCommand.AddOption(continueOnErrorOption);
 
         // Parallel execution option
         var parallelOption = new Option<int>(
-            aliases: new[] { "--parallel", "-p" },
+            aliases: ParallelAliases,
             getDefaultValue: () => 1,
             description: "Number of commands to execute in parallel");
         batchCommand.AddOption(parallelOption);
 
         // Timeout option
         var timeoutOption = new Option<int?>(
-            aliases: new[] { "--timeout", "-t" },
+            aliases: TimeoutAliases,
             description: "Global timeout for the entire batch in milliseconds");
         batchCommand.AddOption(timeoutOption);
 
         // Validate option
         var validateOption = new Option<bool>(
-            aliases: new[] { "--validate", "-v" },
+            aliases: ValidateAliases,
             getDefaultValue: () => true,
             description: "Validate commands before execution");
         batchCommand.AddOption(validateOption);
 
         // Log file option
         var logFileOption = new Option<string?>(
-            aliases: new[] { "--log-file", "-l" },
+            aliases: LogFileAliases,
             description: "Path to save execution log");
         batchCommand.AddOption(logFileOption);
 
         // Dry run option
         var dryRunOption = new Option<bool>(
-            aliases: new[] { "--dry-run", "-n" },
+            aliases: DryRunAliases,
             description: "Show what would be executed without actually running the commands");
         batchCommand.AddOption(dryRunOption);
 
         // Output format option
         var formatOption = new Option<string>(
-            aliases: new[] { "--format", "-f" },
+            aliases: FormatAliases,
             getDefaultValue: () => "text",
             description: "Output format (text, json, yaml, table)");
         batchCommand.AddOption(formatOption);
@@ -96,12 +111,15 @@ public class BatchCommandBuilder
             {
                 if (!File.Exists(batchFile))
                 {
+#pragma warning disable CA1849 // Call async methods when in an async method
+                    // Intentionally using synchronous Console.Error.WriteLine for immediate error feedback in CLI
                     Console.Error.WriteLine($"Error: Batch file not found: {batchFile}");
+#pragma warning restore CA1849 // Call async methods when in an async method
                     Environment.ExitCode = 1;
                     return;
                 }
 
-                var requests = await _argumentParser.ParseBatchFileAsync(batchFile);
+                var requests = await _argumentParser.ParseBatchFileAsync(batchFile).ConfigureAwait(false);
                 var requestList = requests.ToList();
 
                 if (dryRun)
@@ -132,7 +150,7 @@ public class BatchCommandBuilder
                     ? new CancellationTokenSource(TimeSpan.FromMilliseconds(timeout.Value))
                     : new CancellationTokenSource();
 
-                var result = await _batchProcessor.ExecuteAsync(requestList, options, cts.Token);
+                var result = await _batchProcessor.ExecuteAsync(requestList, options, cts.Token).ConfigureAwait(false);
 
                 var outputFormat = Enum.TryParse<OutputFormatter.OutputFormat>(format, true, out var fmt)
                     ? fmt
@@ -144,15 +162,22 @@ public class BatchCommandBuilder
                 // Save execution log if requested
                 if (!string.IsNullOrWhiteSpace(logFile))
                 {
-                    await SaveExecutionLogAsync(logFile, result);
+                    await SaveExecutionLogAsync(logFile, result).ConfigureAwait(false);
                 }
 
                 Environment.ExitCode = result.IsSuccess ? 0 : 1;
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            // Intentionally catching all exceptions in CLI command handler to provide
+            // user-friendly error messages and appropriate exit codes
             catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
-                _logger.LogError(ex, "Error executing batch file {BatchFile}", batchFile);
+                LogBatchExecutionError(_logger, batchFile, ex);
+#pragma warning disable CA1849 // Call async methods when in an async method
+                // Intentionally using synchronous Console.Error.WriteLine for immediate error feedback in CLI
                 Console.Error.WriteLine($"Error: {ex.Message}");
+#pragma warning restore CA1849 // Call async methods when in an async method
                 Environment.ExitCode = 1;
             }
         },
@@ -197,7 +222,7 @@ public class BatchCommandBuilder
             }
         };
 
-        var json = JsonSerializer.Serialize(logData, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(logFile, json);
+        var json = JsonSerializer.Serialize(logData, JsonOptions);
+        await File.WriteAllTextAsync(logFile, json).ConfigureAwait(false);
     }
 }
