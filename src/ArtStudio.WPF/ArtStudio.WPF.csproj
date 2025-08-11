@@ -9,6 +9,7 @@
     <UseWindowsForms>false</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <!-- Suppress warning about old runtime identifiers from SQLite dependencies -->
     <NoWarn>$(NoWarn);NETSDK1206</NoWarn>
   </PropertyGroup>

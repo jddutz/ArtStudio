@@ -89,22 +89,30 @@ public partial class App : Application
                 .Build();
 
             // Start the host
-            await _host.StartAsync().ConfigureAwait(false);
+#pragma warning disable CA2007 // Consider calling ConfigureAwait - Host startup should stay on UI thread context
+            await _host.StartAsync();
+#pragma warning restore CA2007
             _serviceProvider = _host.Services;
 
             LoggingService.LogInfo("Dependency injection configured successfully");
 
             // Initialize services
-            await ServiceConfiguration.InitializeServicesAsync(_serviceProvider, this).ConfigureAwait(false);
+#pragma warning disable CA2007 // Consider calling ConfigureAwait - Need to stay on UI thread for subsequent UI operations
+            await ServiceConfiguration.InitializeServicesAsync(_serviceProvider, this);
+#pragma warning restore CA2007
 
             LoggingService.LogInfo("Services initialized successfully");
 
-            // Create and show main window using DI
+            // Create and show main window using DI - ensure this happens on UI thread
             LoggingService.LogInfo("Creating main window");
-            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            LoggingService.LogInfo("Showing main window");
-            mainWindow.Show();
+            // Ensure MainWindow creation happens on the UI thread
+            Dispatcher.Invoke(() =>
+            {
+                var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+                LoggingService.LogInfo("Showing main window");
+                mainWindow.Show();
+            });
 
             LoggingService.LogInfo("ArtStudio application startup completed successfully");
         }
