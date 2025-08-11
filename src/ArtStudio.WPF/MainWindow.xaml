@@ -22,7 +22,7 @@
 
         <!-- Menu Bar -->
         <views:MainMenuControl Grid.Row="0"
-                DataContext="{Binding}"/>
+                               DataContext="{Binding}"/>
 
         <!-- Main Content Area with Toolbar and Docking -->
         <views:WorkspaceContentControl x:Name="workspaceContent"
@@ -31,6 +31,6 @@
 
         <!-- Status Bar -->
         <views:StatusBarControl Grid.Row="2"
-                DataContext="{Binding}"/>
+                                DataContext="{Binding}"/>
     </Grid>
 </Window>
