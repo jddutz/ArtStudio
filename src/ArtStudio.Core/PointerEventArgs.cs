@@ -10,7 +10,7 @@ public class PointerEventArgs : EventArgs
     public double X { get; set; }
     public double Y { get; set; }
     public double Pressure { get; set; } = 1.0;
-    public double Tilt { get; set; } = 0.0;
+    public double Tilt { get; set; }
     public bool IsLeftButtonPressed { get; set; }
     public bool IsRightButtonPressed { get; set; }
     public bool IsMiddleButtonPressed { get; set; }

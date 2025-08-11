@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using ArtStudio.Core;
@@ -11,6 +12,11 @@ namespace ArtStudio.Core.Services;
 /// </summary>
 public class ConfigurationManager : IConfigurationManager
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        WriteIndented = true
+    };
+
     private readonly string _configFilePath;
     private readonly Dictionary<string, object> _configuration;
     private readonly string[] _availableThemes = { "Light", "Dark", "HighContrast" };
@@ -81,9 +87,21 @@ public class ConfigurationManager : IConfigurationManager
                 }
             }
         }
-        catch (Exception)
+        catch (IOException)
         {
-            // If configuration loading fails, create default configuration
+            // If configuration loading fails due to IO issues, create default configuration
+            CreateDefaultConfiguration();
+            SaveConfiguration();
+        }
+        catch (JsonException)
+        {
+            // If configuration loading fails due to JSON issues, create default configuration
+            CreateDefaultConfiguration();
+            SaveConfiguration();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // If configuration loading fails due to access issues, create default configuration
             CreateDefaultConfiguration();
             SaveConfiguration();
         }
@@ -93,19 +111,24 @@ public class ConfigurationManager : IConfigurationManager
     {
         try
         {
-            var json = JsonSerializer.Serialize(_configuration, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            var json = JsonSerializer.Serialize(_configuration, SerializerOptions);
             File.WriteAllText(_configFilePath, json);
         }
-        catch (Exception)
+        catch (IOException)
         {
-            // Silently handle save errors - configuration will be lost but app can continue
+            // Silently handle IO errors - configuration will be lost but app can continue
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Silently handle access errors - configuration will be lost but app can continue
+        }
+        catch (JsonException)
+        {
+            // Silently handle JSON serialization errors - configuration will be lost but app can continue
         }
     }
 
-    public T GetValue<T>(string key, T defaultValue = default)
+    public T GetValue<T>(string key, T? defaultValue = default)
     {
         if (_configuration.TryGetValue(key, out var value))
         {
@@ -115,24 +138,36 @@ public class ConfigurationManager : IConfigurationManager
                     return directValue;
 
                 if (value is JsonElement jsonElement)
-                    return JsonSerializer.Deserialize<T>(jsonElement.GetRawText()) ?? defaultValue;
+                    return JsonSerializer.Deserialize<T>(jsonElement.GetRawText()) ?? defaultValue!;
 
-                return (T)Convert.ChangeType(value, typeof(T)) ?? defaultValue;
+                return (T?)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture) ?? defaultValue!;
             }
-            catch
+            catch (InvalidCastException)
             {
-                return defaultValue;
+                return defaultValue!;
+            }
+            catch (FormatException)
+            {
+                return defaultValue!;
+            }
+            catch (OverflowException)
+            {
+                return defaultValue!;
+            }
+            catch (JsonException)
+            {
+                return defaultValue!;
             }
         }
-        return defaultValue;
+        return defaultValue!;
     }
 
     public void SetValue<T>(string key, T value)
     {
         var oldValue = _configuration.TryGetValue(key, out var old) ? old : null;
-        _configuration[key] = value;
+        _configuration[key] = value!;
 
-        ConfigurationChanged?.Invoke(this, new ConfigurationChangedEventArgs(key, oldValue, value));
+        ConfigurationChanged?.Invoke(this, new ConfigurationChangedEventArgs(key, oldValue!, value!));
     }
 
     public string[] GetAvailableThemes()

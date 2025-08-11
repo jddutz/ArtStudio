@@ -33,8 +33,9 @@ public static class ServiceConfiguration
         // Core services (singletons)
         services.AddSingleton<IConfigurationManager, ConfigurationManager>();
         services.AddSingleton<IThemeManager, ThemeManager>();
-        services.AddSingleton<ILayoutManager, LayoutManager>();
         services.AddSingleton<IPluginManager, PluginManager>();
+        services.AddSingleton<IWorkspaceManager, WorkspaceManager>();
+        services.AddSingleton<IWorkspaceLayoutManager, WorkspaceLayoutManager>();
 
         // Application services (singletons)
         services.AddSingleton<IEditorService, EditorService>();
@@ -44,6 +45,7 @@ public static class ServiceConfiguration
         services.AddTransient<ToolPaletteViewModel>();
         services.AddTransient<LayerPaletteViewModel>();
         services.AddTransient<EditorViewModel>();
+        services.AddTransient<WorkspaceViewModel>();
         services.AddTransient<MainViewModel>();
 
         // Main Window (transient)
@@ -59,9 +61,11 @@ public static class ServiceConfiguration
     /// <param name="app">The WPF application instance</param>
     public static async Task InitializeServicesAsync(IServiceProvider serviceProvider, App app)
     {
-        // Initialize theme manager
-        var themeManager = serviceProvider.GetRequiredService<IThemeManager>();
-        themeManager.Initialize(app);
+        // Skip theme manager initialization here - it will be done after MainWindow creation
+
+        // Initialize workspace manager
+        var workspaceManager = serviceProvider.GetRequiredService<IWorkspaceManager>();
+        await workspaceManager.InitializeAsync();
 
         // Initialize plugin manager
         var pluginManager = serviceProvider.GetRequiredService<IPluginManager>();
@@ -78,6 +82,18 @@ public static class ServiceConfiguration
         // Log initialization complete
         var logger = serviceProvider.GetRequiredService<ILogger<Application>>();
         logger.LogInformation("Services initialized successfully");
+    }
+
+    /// <summary>
+    /// Initialize the theme manager after the main window is created
+    /// </summary>
+    /// <param name="serviceProvider">The configured service provider</param>
+    /// <param name="app">The WPF application instance</param>
+    public static void InitializeThemeManager(IServiceProvider serviceProvider, App app)
+    {
+        // Initialize theme manager after MainWindow creation to avoid resource conflicts
+        var themeManager = serviceProvider.GetRequiredService<IThemeManager>();
+        themeManager.Initialize(app);
     }
 
     /// <summary>

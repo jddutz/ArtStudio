@@ -1,0 +1,31 @@
+{
+  "logLevel": "Information",
+  "defaultOutputFormat": "text",
+  "defaultTimeout": 30000,
+  "plugins": {
+    "searchPaths": [
+      "./plugins",
+      "~/.artstudio/plugins",
+      "%APPDATA%/ArtStudio/Plugins"
+    ],
+    "autoLoadEnabled": true
+  },
+  "editor": {
+    "defaultDocumentWidth": 1920,
+    "defaultDocumentHeight": 1080,
+    "defaultPixelFormat": "Rgba32",
+    "maxDocuments": 10
+  },
+  "batch": {
+    "defaultContinueOnError": false,
+    "defaultMaxParallelism": 1,
+    "defaultTimeout": 60000,
+    "createExecutionLog": true,
+    "logDirectory": "./logs"
+  },
+  "output": {
+    "defaultFormat": "text",
+    "includeTimestamps": true,
+    "colorOutput": true
+  }
+}

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace ArtStudio.Core;
 
 /// <summary>
@@ -9,5 +11,5 @@ public class GenerationResult
     public string? ErrorMessage { get; set; }
     public LayerData? GeneratedImage { get; set; }
     public GenerationMetadata? Metadata { get; set; }
-    public List<LayerData>? Variants { get; set; }
+    public Collection<LayerData>? Variants { get; }
 }

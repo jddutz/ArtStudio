@@ -61,14 +61,23 @@ public class ThemeManager : CoreThemeManager
 
         try
         {
-            // Clear existing theme resources first
-            ClearThemeResources();
+            // Get the current BundledTheme
+            var bundledTheme = _application.Resources.MergedDictionaries
+                .OfType<BundledTheme>()
+                .FirstOrDefault();
 
-            // Apply Material Design theme
-            ApplyMaterialDesignTheme(themeName);
+            if (bundledTheme != null)
+            {
+                // Update the base theme (Light/Dark) while preserving colors
+                var newBaseTheme = themeName.ToLower().Contains("dark") ? BaseTheme.Dark : BaseTheme.Light;
+                if (bundledTheme.BaseTheme != newBaseTheme)
+                {
+                    bundledTheme.BaseTheme = newBaseTheme;
+                }
+            }
 
-            // Apply custom theme resources
-            ApplyCustomThemeResources(themeName);
+            // Update custom color overrides if needed
+            UpdateCustomColors(themeName);
 
             // Update configuration
             _configurationManager.CurrentTheme = themeName;
@@ -88,6 +97,33 @@ public class ThemeManager : CoreThemeManager
         var systemUsesLightTheme = IsSystemLightTheme();
         var themeName = systemUsesLightTheme ? "Light" : "Dark";
         ApplyTheme(themeName);
+    }
+
+    private void UpdateCustomColors(string themeName)
+    {
+        if (_application?.Resources == null)
+            return;
+
+        // Find our color resource dictionary
+        var colorDict = _application.Resources.MergedDictionaries
+            .FirstOrDefault(d => d.Source?.OriginalString?.Contains("Colors.xaml") == true);
+
+        if (colorDict == null) return;
+
+        // Update specific colors based on theme
+        switch (themeName.ToLower())
+        {
+            case "dark":
+                colorDict["MaterialDesignPaper"] = new SolidColorBrush(Color.FromRgb(0x2D, 0x2D, 0x30));
+                colorDict["MaterialDesignCardBackground"] = new SolidColorBrush(Color.FromRgb(0x3E, 0x3E, 0x42));
+                colorDict["MaterialDesignToolBarBackground"] = new SolidColorBrush(Color.FromRgb(0x3E, 0x3E, 0x42));
+                break;
+            case "light":
+                colorDict["MaterialDesignPaper"] = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
+                colorDict["MaterialDesignCardBackground"] = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5));
+                colorDict["MaterialDesignToolBarBackground"] = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
+                break;
+        }
     }
 
     public bool ThemeExists(string themeName)
@@ -160,7 +196,7 @@ public class ThemeManager : CoreThemeManager
         // Add Material Design defaults
         _application.Resources.MergedDictionaries.Add(new ResourceDictionary
         {
-            Source = new Uri("pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml")
+            Source = new Uri("pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml")
         });
     }
 

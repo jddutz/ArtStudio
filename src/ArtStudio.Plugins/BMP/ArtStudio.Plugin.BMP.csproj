@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <OutputPath>..\..\..\..\bin\Debug\Plugins\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- Suppress platform-specific warnings for System.Drawing APIs -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

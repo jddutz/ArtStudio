@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ArtStudio.Core;
 
@@ -8,10 +9,10 @@ namespace ArtStudio.Core;
 /// </summary>
 public class PluginsLoadedEventArgs : EventArgs
 {
-    public List<PluginMetadata> LoadedPlugins { get; }
-    public List<PluginLoadError> LoadErrors { get; }
+    public Collection<PluginMetadata> LoadedPlugins { get; }
+    public Collection<PluginLoadError> LoadErrors { get; }
 
-    public PluginsLoadedEventArgs(List<PluginMetadata> loadedPlugins, List<PluginLoadError> loadErrors)
+    public PluginsLoadedEventArgs(Collection<PluginMetadata> loadedPlugins, Collection<PluginLoadError> loadErrors)
     {
         LoadedPlugins = loadedPlugins;
         LoadErrors = loadErrors;

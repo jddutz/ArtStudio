@@ -15,6 +15,22 @@ public class CommandRegistry : ICommandRegistry
     private readonly ConcurrentDictionary<string, IPluginCommand> _commands = new();
     private readonly ILogger<CommandRegistry>? _logger;
 
+    // LoggerMessage delegates for high-performance logging
+    private static readonly Action<ILogger, string, string, Exception?> LogRegisteredCommand =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(1, nameof(RegisterCommand)), "Registered command: {CommandId} ({DisplayName})");
+
+    private static readonly Action<ILogger, string, Exception?> LogWarningMessage =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, nameof(RegisterCommand)), "{Message}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogUnregisteredCommand =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(3, nameof(UnregisterCommand)), "Unregistered command: {CommandId} ({DisplayName})");
+
+    private static readonly Action<ILogger, string, Exception?> LogDisposeWarning =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, nameof(UnregisterCommand)), "Error disposing command {CommandId}");
+
+    private static readonly Action<ILogger, Exception?> LogClearedCommands =
+        LoggerMessage.Define(LogLevel.Information, new EventId(5, nameof(Clear)), "Cleared all registered commands");
+
     /// <inheritdoc />
     public IEnumerable<IPluginCommand> Commands => _commands.Values.OrderBy(c => c.Category).ThenBy(c => c.Priority).ThenBy(c => c.DisplayName);
 
@@ -35,16 +51,15 @@ public class CommandRegistry : ICommandRegistry
     /// <inheritdoc />
     public void RegisterCommand(IPluginCommand command)
     {
-        if (command == null)
-            throw new ArgumentNullException(nameof(command));
+        ArgumentNullException.ThrowIfNull(command);
 
         if (string.IsNullOrWhiteSpace(command.CommandId))
             throw new ArgumentException("Command ID cannot be null or empty", nameof(command));
 
         if (_commands.TryAdd(command.CommandId, command))
         {
-            _logger?.LogInformation("Registered command: {CommandId} ({DisplayName})",
-                command.CommandId, command.DisplayName);
+            if (_logger != null)
+                LogRegisteredCommand(_logger, command.CommandId, command.DisplayName, null);
 
             CommandRegistered?.Invoke(this, new CommandRegisteredEventArgs(command));
         }
@@ -52,7 +67,8 @@ public class CommandRegistry : ICommandRegistry
         {
             var existingCommand = _commands[command.CommandId];
             var message = $"Command with ID '{command.CommandId}' is already registered by '{existingCommand.GetType().Name}'";
-            _logger?.LogWarning(message);
+            if (_logger != null)
+                LogWarningMessage(_logger, message, null);
             throw new InvalidOperationException(message);
         }
     }
@@ -65,22 +81,41 @@ public class CommandRegistry : ICommandRegistry
 
         if (_commands.TryRemove(commandId, out var command))
         {
-            _logger?.LogInformation("Unregistered command: {CommandId} ({DisplayName})",
-                commandId, command.DisplayName);
-
-            CommandUnregistered?.Invoke(this, new CommandUnregisteredEventArgs(commandId, command));
-
-            // Dispose the command if it's disposable
+            IDisposable? disposableCommand = null;
             try
             {
-                command.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Error disposing command {CommandId}", commandId);
-            }
+                disposableCommand = command as IDisposable;
 
-            return true;
+                if (_logger != null)
+                    LogUnregisteredCommand(_logger, commandId, command.DisplayName, null);
+
+                CommandUnregistered?.Invoke(this, new CommandUnregisteredEventArgs(commandId, command));
+
+                // Transfer ownership to avoid dispose in finally
+                disposableCommand = null;
+
+                // Dispose the command if it's disposable
+                if (command is IDisposable disposable)
+                    disposable.Dispose();
+
+                return true;
+            }
+            catch (ObjectDisposedException)
+            {
+                // Command already disposed, which is fine
+                return true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (_logger != null)
+                    LogDisposeWarning(_logger, commandId, ex);
+                return true; // Command was removed even if disposal failed
+            }
+            finally
+            {
+                // Ensure disposal in case of exceptions
+                disposableCommand?.Dispose();
+            }
         }
 
         return false;
@@ -134,7 +169,8 @@ public class CommandRegistry : ICommandRegistry
             UnregisterCommand(commandId);
         }
 
-        _logger?.LogInformation("Cleared all registered commands");
+        if (_logger != null)
+            LogClearedCommands(_logger, null);
     }
 
     /// <summary>

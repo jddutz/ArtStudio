@@ -1,0 +1,30 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Treat all warnings as errors -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Enable nullable reference types for better code quality -->
+    <Nullable>enable</Nullable>
+
+    <!-- Enable all analysis rules for better code quality -->
+    <AnalysisMode>All</AnalysisMode>
+
+    <!-- Generate documentation XML files -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Suppress XML documentation warnings for now (can be enabled later) -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- 
+    Important: When using #pragma warning disable, always include a comment
+    explaining why the warning is being suppressed and when it might be safe
+    to remove the suppression.
+    
+    Example:
+    #pragma warning disable CS1234 // Suppressing because [specific justification]
+    // TODO: Remove this suppression when [specific condition is met]
+  -->
+
+</Project>

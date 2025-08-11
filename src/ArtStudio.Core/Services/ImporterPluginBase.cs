@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ArtStudio.Core;
@@ -11,19 +13,21 @@ namespace ArtStudio.Core.Services;
 /// </summary>
 public abstract class ImporterPluginBase : PluginBase, IImporterPlugin
 {
-    public abstract string[] SupportedExtensions { get; }
-    public abstract string[] SupportedMimeTypes { get; }
+    public abstract IReadOnlyList<string> SupportedExtensions { get; }
+    public abstract IReadOnlyList<string> SupportedMimeTypes { get; }
 
     public virtual bool CanImport(string filePath)
     {
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
-        return Array.Exists(SupportedExtensions, ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase));
+        var extension = Path.GetExtension(filePath).ToUpperInvariant();
+        return SupportedExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase));
     }
 
     public abstract Task<ImportResult> ImportAsync(string filePath, ImportOptions? options = null, CancellationToken cancellationToken = default);
 
     public virtual async Task<ImportResult> ImportAsync(Stream stream, string fileName, ImportOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(stream);
+
         // Default implementation: save to temp file and import from file
         var tempPath = Path.GetTempFileName();
         var extension = Path.GetExtension(fileName);
@@ -33,10 +37,10 @@ public abstract class ImporterPluginBase : PluginBase, IImporterPlugin
         {
             using (var fileStream = File.Create(tempFileWithExtension))
             {
-                await stream.CopyToAsync(fileStream, cancellationToken);
+                await stream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
             }
 
-            return await ImportAsync(tempFileWithExtension, options, cancellationToken);
+            return await ImportAsync(tempFileWithExtension, options, cancellationToken).ConfigureAwait(false);
         }
         finally
         {

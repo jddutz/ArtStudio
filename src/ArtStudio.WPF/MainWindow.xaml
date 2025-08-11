@@ -3,9 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
         xmlns:views="clr-namespace:ArtStudio.WPF.Views"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         Title="ArtStudio"
         Height="800"
@@ -18,252 +16,21 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Menu Bar -->
-        <Menu Grid.Row="0"
-              Style="{StaticResource ArtStudio.Menu}">
-            <MenuItem Header="_File">
-                <MenuItem Header="_New"
-                          Command="{Binding NewCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="FileOutline"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Open"
-                          Command="{Binding OpenCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="FolderOpenOutline"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Save"
-                          Command="{Binding SaveCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="ContentSave"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="Save _As"
-                          Command="{Binding SaveAsCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="ContentSaveEdit"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <Separator/>
-                <MenuItem Header="E_xit"
-                          Command="{Binding ExitCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="ExitToApp"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo"
-                          Command="{Binding UndoCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="Undo"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Redo"
-                          Command="{Binding RedoCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="Redo"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <Separator/>
-                <MenuItem Header="_Cut"
-                          Command="{Binding CutCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="ContentCut"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Copy"
-                          Command="{Binding CopyCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="ContentCopy"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Paste"
-                          Command="{Binding PasteCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="ContentPaste"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="_Tool Palette"
-                          IsCheckable="True"
-                          IsChecked="{Binding IsToolPaletteVisible}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="Palette"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Layer Palette"
-                          IsCheckable="True"
-                          IsChecked="{Binding IsLayerPaletteVisible}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="Layers"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="_Properties"
-                          IsCheckable="True"
-                          IsChecked="{Binding IsPropertiesVisible}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="Cog"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About"
-                          Command="{Binding AboutCommand}">
-                    <MenuItem.Icon>
-                        <materialDesign:PackIcon Kind="Information"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
-        </Menu>
+        <views:MainMenuControl Grid.Row="0"
+                DataContext="{Binding}"/>
 
-        <!-- Toolbar -->
-        <ToolBar Grid.Row="1"
-                 Style="{StaticResource ArtStudio.ToolBar}">
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding NewCommand}"
-                    ToolTip="New">
-                <materialDesign:PackIcon Kind="FileOutline"/>
-            </Button>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding OpenCommand}"
-                    ToolTip="Open">
-                <materialDesign:PackIcon Kind="FolderOpenOutline"/>
-            </Button>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding SaveCommand}"
-                    ToolTip="Save">
-                <materialDesign:PackIcon Kind="ContentSave"/>
-            </Button>
-            <Separator/>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding UndoCommand}"
-                    ToolTip="Undo">
-                <materialDesign:PackIcon Kind="Undo"/>
-            </Button>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding RedoCommand}"
-                    ToolTip="Redo">
-                <materialDesign:PackIcon Kind="Redo"/>
-            </Button>
-            <Separator/>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding SelectBrushCommand}"
-                    ToolTip="Brush">
-                <materialDesign:PackIcon Kind="Brush"/>
-            </Button>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding SelectEraserCommand}"
-                    ToolTip="Eraser">
-                <materialDesign:PackIcon Kind="Eraser"/>
-            </Button>
-            <Button Style="{StaticResource ArtStudio.IconButton}"
-                    Command="{Binding SelectSelectionCommand}"
-                    ToolTip="Selection">
-                <materialDesign:PackIcon Kind="SelectionDrag"/>
-            </Button>
-        </ToolBar>
-
-        <!-- Main Content Area with Docking -->
-        <avalonDock:DockingManager Grid.Row="2"
-                                   x:Name="dockManager"
-                                   AllowMixedOrientation="True"
-                                   BorderBrush="Black"
-                                   BorderThickness="1">
-
-            <avalonDock:DockingManager.DocumentHeaderTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="{Binding IconSource}"
-                               Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding Title}"/>
-                    </StackPanel>
-                </DataTemplate>
-            </avalonDock:DockingManager.DocumentHeaderTemplate>
-
-            <avalonDock:LayoutRoot x:Name="_layoutRoot">
-                <avalonDock:LayoutPanel Orientation="Horizontal">
-
-                    <!-- Left Panel for Tool Palette -->
-                    <avalonDock:LayoutAnchorablePane DockWidth="200">
-                        <avalonDock:LayoutAnchorable ContentId="toolPalette"
-                                                     Title="Tools"
-                                                     CanHide="True"
-                                                     CanClose="False"
-                                                     CanFloat="True">
-                            <ContentControl>
-                                <ContentControl.Content>
-                                    <views:ToolPaletteView DataContext="{Binding ToolPaletteViewModel}"/>
-                                </ContentControl.Content>
-                            </ContentControl>
-                        </avalonDock:LayoutAnchorable>
-                    </avalonDock:LayoutAnchorablePane>
-
-                    <!-- Center Panel for Documents -->
-                    <avalonDock:LayoutDocumentPane>
-                        <avalonDock:LayoutDocument ContentId="document1"
-                                                   Title="Canvas 1"
-                                                   CanClose="True">
-                            <views:EditorView DataContext="{Binding EditorViewModel}"/>
-                        </avalonDock:LayoutDocument>
-                    </avalonDock:LayoutDocumentPane>
-
-                    <!-- Right Panel for Properties and Layers -->
-                    <avalonDock:LayoutAnchorablePane DockWidth="250">
-                        <avalonDock:LayoutAnchorable ContentId="layerPalette"
-                                                     Title="Layers"
-                                                     CanHide="True"
-                                                     CanClose="False"
-                                                     CanFloat="True">
-                            <views:LayerPaletteView DataContext="{Binding LayerPaletteViewModel}"/>
-                        </avalonDock:LayoutAnchorable>
-
-                        <avalonDock:LayoutAnchorable ContentId="properties"
-                                                     Title="Properties"
-                                                     CanHide="True"
-                                                     CanClose="False"
-                                                     CanFloat="True">
-                            <Grid Background="LightGray">
-                                <TextBlock Text="Properties Panel"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-                            </Grid>
-                        </avalonDock:LayoutAnchorable>
-                    </avalonDock:LayoutAnchorablePane>
-
-                </avalonDock:LayoutPanel>
-            </avalonDock:LayoutRoot>
-        </avalonDock:DockingManager>
+        <!-- Main Content Area with Toolbar and Docking -->
+        <views:WorkspaceContentControl x:Name="workspaceContent"
+                                       Grid.Row="1"
+                                       DataContext="{Binding}"/>
 
         <!-- Status Bar -->
-        <StatusBar Grid.Row="3"
-                   Style="{StaticResource ArtStudio.StatusBar}">
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Information"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,4,0"/>
-                    <TextBlock Text="{Binding StatusText}"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Magnify"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,4,0"/>
-                    <TextBlock Text="{Binding ZoomLevel, StringFormat=Zoom: {0}%}"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
-            </StatusBarItem>
-        </StatusBar>
+        <views:StatusBarControl Grid.Row="2"
+                DataContext="{Binding}"/>
     </Grid>
 </Window>

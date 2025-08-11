@@ -60,6 +60,34 @@
 			],
 			"group": "test",
 			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "run-cli",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"src/ArtStudio.CLI",
+				"--",
+				"help"
+			],
+			"group": "build",
+			"dependsOn": "build",
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build-cli",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"src/ArtStudio.CLI",
+				"--configuration",
+				"Debug"
+			],
+			"group": "build",
+			"problemMatcher": "$msCompile"
 		}
 	]
 }

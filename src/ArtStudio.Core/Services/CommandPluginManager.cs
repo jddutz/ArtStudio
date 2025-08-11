@@ -1,213 +1,226 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ArtStudio.Core;
 using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.Core.Services;
 
 /// <summary>
-/// Service that manages command plugins and integrates them with the command registry
+/// Manages command plugins and their registration with the command registry
 /// </summary>
 public class CommandPluginManager
 {
     private readonly ICommandRegistry _commandRegistry;
     private readonly IPluginManager _pluginManager;
     private readonly ILogger<CommandPluginManager>? _logger;
-    private readonly HashSet<string> _registeredPlugins = new();
+    private readonly Dictionary<string, ICommandPlugin> _commandPlugins = new();
+
+    // High-performance logging delegates
+    private static readonly Action<ILogger, string, Exception?> LogRegisteringCommandPlugin =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(RegisterCommandPlugin)),
+            "Registering command plugin: {PluginId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogUnregisteringCommandPlugin =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(UnregisterCommandPlugin)),
+            "Unregistering command plugin: {PluginId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCommandPluginRegistered =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3, nameof(RegisterCommandPlugin)),
+            "Command plugin registered successfully: {PluginId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCommandPluginUnregistered =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(4, nameof(UnregisterCommandPlugin)),
+            "Command plugin unregistered successfully: {PluginId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToRegisterCommandPlugin =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(5, nameof(RegisterCommandPlugin)),
+            "Failed to register command plugin: {PluginId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToUnregisterCommandPlugin =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(6, nameof(UnregisterCommandPlugin)),
+            "Failed to unregister command plugin: {PluginId}");
+
+    private static readonly Action<ILogger, Exception?> LogPluginStateChangeHandled =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(7, nameof(OnPluginStateChanged)),
+            "Plugin state change handled");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToHandlePluginStateChange =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(8, nameof(OnPluginStateChanged)),
+            "Failed to handle plugin state change for plugin: {PluginId}");
 
     /// <summary>
-    /// Initialize the command plugin manager
+    /// Initializes a new instance of CommandPluginManager
     /// </summary>
-    public CommandPluginManager(
-        ICommandRegistry commandRegistry,
-        IPluginManager pluginManager,
-        ILogger<CommandPluginManager>? logger = null)
+    public CommandPluginManager(ICommandRegistry commandRegistry, IPluginManager pluginManager, ILogger<CommandPluginManager>? logger = null)
     {
         _commandRegistry = commandRegistry ?? throw new ArgumentNullException(nameof(commandRegistry));
         _pluginManager = pluginManager ?? throw new ArgumentNullException(nameof(pluginManager));
         _logger = logger;
 
-        // Subscribe to plugin manager events
-        _pluginManager.PluginsLoaded += OnPluginsLoaded;
+        // Subscribe to plugin state changes
         _pluginManager.PluginStateChanged += OnPluginStateChanged;
     }
 
     /// <summary>
-    /// Register commands from all loaded command plugins
+    /// Registers all available command plugins with the command registry
     /// </summary>
     public void RegisterAllCommandPlugins()
     {
-        _logger?.LogInformation("Registering commands from all loaded command plugins");
-
         var commandPlugins = _pluginManager.GetPlugins<ICommandPlugin>();
-
         foreach (var plugin in commandPlugins)
         {
-            RegisterCommandPlugin(plugin);
+            var metadata = _pluginManager.GetPluginMetadata(plugin.Id);
+            if (metadata?.IsEnabled == true)
+            {
+                RegisterCommandPlugin(plugin.Id, plugin);
+            }
         }
-
-        _logger?.LogInformation("Registered commands from {Count} command plugins", commandPlugins.Count());
     }
 
     /// <summary>
-    /// Register commands from a specific command plugin
+    /// Registers a specific command plugin
     /// </summary>
-    public void RegisterCommandPlugin(ICommandPlugin plugin)
+    public void RegisterCommandPlugin(string pluginId, ICommandPlugin commandPlugin)
     {
-        if (plugin == null)
-            throw new ArgumentNullException(nameof(plugin));
-
-        if (_registeredPlugins.Contains(plugin.Id))
-        {
-            _logger?.LogWarning("Command plugin {PluginId} is already registered", plugin.Id);
-            return;
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(pluginId);
+        ArgumentNullException.ThrowIfNull(commandPlugin);
 
         try
         {
-            _logger?.LogDebug("Registering commands from plugin: {PluginId}", plugin.Id);
+            if (_logger != null)
+                LogRegisteringCommandPlugin(_logger, pluginId, null);
 
-            plugin.RegisterCommands(_commandRegistry);
-            _registeredPlugins.Add(plugin.Id);
+            commandPlugin.RegisterCommands(_commandRegistry);
+            _commandPlugins[pluginId] = commandPlugin;
 
-            _logger?.LogInformation("Successfully registered commands from plugin: {PluginId}", plugin.Id);
+            if (_logger != null)
+                LogCommandPluginRegistered(_logger, pluginId, null);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to register commands from plugin: {PluginId}", plugin.Id);
+            if (_logger != null)
+                LogFailedToRegisterCommandPlugin(_logger, pluginId, ex);
             throw;
         }
     }
 
     /// <summary>
-    /// Unregister commands from a specific command plugin
+    /// Unregisters a specific command plugin
     /// </summary>
-    public void UnregisterCommandPlugin(ICommandPlugin plugin)
+    public void UnregisterCommandPlugin(string pluginId)
     {
-        if (plugin == null)
-            throw new ArgumentNullException(nameof(plugin));
+        ArgumentException.ThrowIfNullOrWhiteSpace(pluginId);
 
-        if (!_registeredPlugins.Contains(plugin.Id))
-        {
-            _logger?.LogWarning("Command plugin {PluginId} is not registered", plugin.Id);
+        if (!_commandPlugins.TryGetValue(pluginId, out var commandPlugin))
             return;
-        }
 
         try
         {
-            _logger?.LogDebug("Unregistering commands from plugin: {PluginId}", plugin.Id);
+            if (_logger != null)
+                LogUnregisteringCommandPlugin(_logger, pluginId, null);
 
-            plugin.UnregisterCommands(_commandRegistry);
-            _registeredPlugins.Remove(plugin.Id);
+            commandPlugin.UnregisterCommands(_commandRegistry);
+            _commandPlugins.Remove(pluginId);
 
-            _logger?.LogInformation("Successfully unregistered commands from plugin: {PluginId}", plugin.Id);
+            if (_logger != null)
+                LogCommandPluginUnregistered(_logger, pluginId, null);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions is intentional here because plugin unregistration should not fail
+        // the entire application. We log the error and continue gracefully to maintain system stability.
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
-            _logger?.LogError(ex, "Failed to unregister commands from plugin: {PluginId}", plugin.Id);
+            if (_logger != null)
+                LogFailedToUnregisterCommandPlugin(_logger, pluginId, ex);
+            // Don't rethrow - plugin cleanup should be graceful
         }
     }
 
     /// <summary>
-    /// Get all command plugins
+    /// Gets all registered command plugins
     /// </summary>
-    public IEnumerable<ICommandPlugin> GetCommandPlugins()
+    public IEnumerable<ICommandPlugin> GetRegisteredCommandPlugins()
     {
-        return _pluginManager.GetPlugins<ICommandPlugin>();
+        return _commandPlugins.Values.ToList();
     }
 
     /// <summary>
-    /// Get commands from a specific plugin
+    /// Gets a specific command plugin by ID
     /// </summary>
-    public IEnumerable<IPluginCommand> GetCommandsFromPlugin(string pluginId)
+    public ICommandPlugin? GetCommandPlugin(string pluginId)
     {
-        var plugin = _pluginManager.GetPlugin<ICommandPlugin>(pluginId);
-        return plugin?.Commands ?? Enumerable.Empty<IPluginCommand>();
+        _commandPlugins.TryGetValue(pluginId, out var plugin);
+        return plugin;
     }
 
     /// <summary>
-    /// Get statistics about command plugins
+    /// Checks if a command plugin is registered
     /// </summary>
-    public CommandPluginStatistics GetStatistics()
+    public bool IsCommandPluginRegistered(string pluginId)
     {
-        var commandPlugins = GetCommandPlugins().ToList();
-        var totalCommands = commandPlugins.SelectMany(p => p.Commands).Count();
+        return _commandPlugins.ContainsKey(pluginId);
+    }
 
-        return new CommandPluginStatistics
+    /// <summary>
+    /// Unregisters all command plugins
+    /// </summary>
+    public void UnregisterAllCommandPlugins()
+    {
+        var pluginIds = _commandPlugins.Keys.ToList();
+        foreach (var pluginId in pluginIds)
         {
-            TotalCommandPlugins = commandPlugins.Count,
-            RegisteredCommandPlugins = _registeredPlugins.Count,
-            TotalCommandsFromPlugins = totalCommands,
-            CommandPlugins = commandPlugins.Select(p => new CommandPluginInfo
-            {
-                PluginId = p.Id,
-                PluginName = p.Name,
-                IsRegistered = _registeredPlugins.Contains(p.Id),
-                CommandCount = p.Commands.Count()
-            }).ToList()
-        };
+            UnregisterCommandPlugin(pluginId);
+        }
     }
 
     /// <summary>
-    /// Handle plugins loaded event
-    /// </summary>
-    private void OnPluginsLoaded(object? sender, PluginsLoadedEventArgs e)
-    {
-        _logger?.LogDebug("Plugins loaded, registering command plugins");
-
-        // Register commands from all newly loaded command plugins
-        RegisterAllCommandPlugins();
-    }
-
-    /// <summary>
-    /// Handle plugin state changed event
+    /// Handles plugin state changes to automatically register/unregister command plugins
     /// </summary>
     private void OnPluginStateChanged(object? sender, PluginStateChangedEventArgs e)
     {
-        var plugin = _pluginManager.GetPlugin(e.PluginId);
-        if (plugin is ICommandPlugin commandPlugin)
+        try
         {
-            _logger?.LogDebug("Command plugin state changed: {PluginId}, enabled: {IsEnabled}",
-                commandPlugin.Id, e.IsEnabled);
+            var plugin = _pluginManager.GetPlugin(e.PluginId);
+            if (plugin is not ICommandPlugin commandPlugin)
+                return;
 
-            try
+            if (e.IsEnabled)
             {
-                if (e.IsEnabled)
+                if (!IsCommandPluginRegistered(e.PluginId))
                 {
-                    RegisterCommandPlugin(commandPlugin);
-                }
-                else
-                {
-                    UnregisterCommandPlugin(commandPlugin);
+                    RegisterCommandPlugin(e.PluginId, commandPlugin);
                 }
             }
-            catch (Exception ex)
+            else
             {
-                _logger?.LogError(ex, "Failed to handle state change for command plugin: {PluginId}", commandPlugin.Id);
+                if (IsCommandPluginRegistered(e.PluginId))
+                {
+                    UnregisterCommandPlugin(e.PluginId);
+                }
             }
+
+            if (_logger != null)
+                LogPluginStateChangeHandled(_logger, null);
+        }
+#pragma warning disable CA1031 // Do not catch general exception types
+        // Catching all exceptions is intentional here because event handlers should not fail
+        // the entire application. We log the error and continue gracefully.
+        catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+        {
+            if (_logger != null)
+                LogFailedToHandlePluginStateChange(_logger, e.PluginId, ex);
+            // Don't rethrow - event handlers should be resilient
         }
     }
-}
 
-/// <summary>
-/// Statistics about command plugins
-/// </summary>
-public class CommandPluginStatistics
-{
-    public int TotalCommandPlugins { get; init; }
-    public int RegisteredCommandPlugins { get; init; }
-    public int TotalCommandsFromPlugins { get; init; }
-    public List<CommandPluginInfo> CommandPlugins { get; init; } = new();
-}
-
-/// <summary>
-/// Information about a command plugin
-/// </summary>
-public class CommandPluginInfo
-{
-    public string PluginId { get; init; } = string.Empty;
-    public string PluginName { get; init; } = string.Empty;
-    public bool IsRegistered { get; init; }
-    public int CommandCount { get; init; }
+    /// <summary>
+    /// Disposes resources and unregisters from events
+    /// </summary>
+    public void Dispose()
+    {
+        UnregisterAllCommandPlugins();
+        _pluginManager.PluginStateChanged -= OnPluginStateChanged;
+    }
 }

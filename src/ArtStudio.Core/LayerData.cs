@@ -7,9 +7,9 @@ namespace ArtStudio.Core;
 /// </summary>
 public class LayerData
 {
-    public byte[] ImageData { get; set; } = Array.Empty<byte>();
+    public IReadOnlyList<byte> ImageData { get; set; } = Array.Empty<byte>();
     public int Width { get; set; }
     public int Height { get; set; }
     public PixelFormat Format { get; set; } = PixelFormat.Rgba32;
-    public Dictionary<string, object> Properties { get; set; } = new();
+    public Dictionary<string, object> Properties { get; } = new();
 }

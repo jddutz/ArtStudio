@@ -9,5 +9,5 @@ namespace ArtStudio.Core;
 public class FilterMetadata
 {
     public TimeSpan ProcessingTime { get; set; }
-    public Dictionary<string, object> Properties { get; set; } = new();
+    public Dictionary<string, object> Properties { get; } = new();
 }

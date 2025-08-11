@@ -8,8 +8,8 @@ namespace ArtStudio.Core;
 public class ExportOptions
 {
     public int? Quality { get; set; }
-    public bool FlattenLayers { get; set; } = false;
+    public bool FlattenLayers { get; set; }
     public bool IncludeMetadata { get; set; } = true;
     public double? Dpi { get; set; }
-    public Dictionary<string, object> CustomOptions { get; set; } = new();
+    public Dictionary<string, object> CustomOptions { get; } = new();
 }

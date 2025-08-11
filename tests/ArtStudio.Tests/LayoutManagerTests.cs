@@ -1,51 +1,60 @@
 using Xunit;
 using ArtStudio.Core.Services;
 using ArtStudio.Core;
+using Moq;
 
 namespace ArtStudio.Tests;
 
-public class LayoutManagerTests
+public class WorkspaceManagerTests
 {
     [Fact]
-    public void LayoutManager_ShouldImplementInterface()
+    public void WorkspaceManager_ShouldImplementInterface()
     {
-        // Arrange & Act
-        ILayoutManager layoutManager = new LayoutManager();
+        // Arrange
+        var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
+
+        // Act
+        IWorkspaceManager workspaceManager = new WorkspaceManager(mockLayoutManager.Object);
 
         // Assert
-        Assert.NotNull(layoutManager);
+        Assert.NotNull(workspaceManager);
     }
 
     [Fact]
-    public void SaveLayout_ShouldNotThrow()
+    public async Task CreateWorkspaceAsync_ShouldNotThrow()
     {
         // Arrange
-        var layoutManager = new LayoutManager();
+        var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
+        var workspaceManager = new WorkspaceManager(mockLayoutManager.Object);
 
         // Act & Assert
-        var exception = Record.Exception(() => layoutManager.SaveLayout("test"));
+        var exception = await Record.ExceptionAsync(() => workspaceManager.CreateWorkspaceAsync("test"));
         Assert.Null(exception);
     }
 
     [Fact]
-    public void LoadLayout_ShouldNotThrow()
+    public async Task SwitchToWorkspaceAsync_ShouldNotThrow()
     {
         // Arrange
-        var layoutManager = new LayoutManager();
+        var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
+        var workspaceManager = new WorkspaceManager(mockLayoutManager.Object);
+        var workspace = await workspaceManager.CreateWorkspaceAsync("test");
 
         // Act & Assert
-        var exception = Record.Exception(() => layoutManager.LoadLayout("test"));
+        var exception = await Record.ExceptionAsync(() => workspaceManager.SwitchToWorkspaceAsync(workspace.Id));
         Assert.Null(exception);
     }
 
     [Fact]
-    public void ResetToDefault_ShouldNotThrow()
+    public async Task ResetWorkspaceAsync_ShouldNotThrow()
     {
         // Arrange
-        var layoutManager = new LayoutManager();
+        var mockLayoutManager = new Mock<IWorkspaceLayoutManager>();
+        var workspaceManager = new WorkspaceManager(mockLayoutManager.Object);
+        var workspace = await workspaceManager.CreateWorkspaceAsync("test");
 
         // Act & Assert
-        var exception = Record.Exception(() => layoutManager.ResetToDefault());
+        var exception = await Record.ExceptionAsync(() => workspaceManager.ResetWorkspaceAsync(workspace.Id));
         Assert.Null(exception);
     }
 }

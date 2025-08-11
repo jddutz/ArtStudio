@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ArtStudio.Core;
@@ -11,13 +13,14 @@ namespace ArtStudio.Core.Services;
 /// </summary>
 public abstract class ExporterPluginBase : PluginBase, IExporterPlugin
 {
-    public abstract string[] SupportedExtensions { get; }
-    public abstract string[] SupportedMimeTypes { get; }
+    public abstract IReadOnlyList<string> SupportedExtensions { get; }
+    public abstract IReadOnlyList<string> SupportedMimeTypes { get; }
 
     public virtual bool CanExport(string extension)
     {
-        var normalizedExtension = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
-        return Array.Exists(SupportedExtensions, ext => ext.Equals(normalizedExtension, StringComparison.OrdinalIgnoreCase));
+        ArgumentNullException.ThrowIfNull(extension);
+        var normalizedExtension = extension.StartsWith('.') ? extension.ToUpperInvariant() : $".{extension.ToUpperInvariant()}";
+        return SupportedExtensions.Any(ext => ext.Equals(normalizedExtension, StringComparison.OrdinalIgnoreCase));
     }
 
     public abstract Task<ExportResult> ExportAsync(ExportData data, string filePath, ExportOptions? options = null, CancellationToken cancellationToken = default);
@@ -31,13 +34,13 @@ public abstract class ExporterPluginBase : PluginBase, IExporterPlugin
 
         try
         {
-            var result = await ExportAsync(data, tempFileWithExtension, options, cancellationToken);
+            var result = await ExportAsync(data, tempFileWithExtension, options, cancellationToken).ConfigureAwait(false);
 
             if (result.Success && File.Exists(tempFileWithExtension))
             {
                 using (var fileStream = File.OpenRead(tempFileWithExtension))
                 {
-                    await fileStream.CopyToAsync(stream, cancellationToken);
+                    await fileStream.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
                 }
             }
 

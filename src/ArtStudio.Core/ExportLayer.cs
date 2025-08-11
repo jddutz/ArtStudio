@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ArtStudio.Core;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace ArtStudio.Core;
 public class ExportLayer
 {
     public string Name { get; set; } = string.Empty;
-    public byte[] ImageData { get; set; } = Array.Empty<byte>();
+    public IReadOnlyList<byte> ImageData { get; set; } = Array.Empty<byte>();
     public int X { get; set; }
     public int Y { get; set; }
     public int Width { get; set; }

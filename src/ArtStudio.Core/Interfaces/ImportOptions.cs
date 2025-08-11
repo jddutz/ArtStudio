@@ -12,5 +12,5 @@ public class ImportOptions
     public bool PreserveTransparency { get; set; } = true;
     public bool PreserveLayers { get; set; } = true;
     public double? DpiOverride { get; set; }
-    public Dictionary<string, object> CustomOptions { get; set; } = new();
+    public Dictionary<string, object> CustomOptions { get; } = new();
 }

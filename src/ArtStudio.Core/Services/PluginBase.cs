@@ -10,7 +10,7 @@ namespace ArtStudio.Core.Services;
 public abstract class PluginBase : IPlugin
 {
     private bool _isEnabled = true;
-    protected IPluginContext? _context;
+    private IPluginContext? _context;
 
     public abstract string Id { get; }
     public abstract string Name { get; }
@@ -23,6 +23,8 @@ public abstract class PluginBase : IPlugin
         get => _isEnabled;
         set => _isEnabled = value;
     }
+
+    protected IPluginContext? Context => _context;
 
     public virtual void Initialize(IPluginContext context)
     {

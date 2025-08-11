@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,12 +14,12 @@ public interface IImporterPlugin : IPlugin
     /// <summary>
     /// File extensions this importer supports (e.g., ".jpg", ".png")
     /// </summary>
-    string[] SupportedExtensions { get; }
+    IReadOnlyList<string> SupportedExtensions { get; }
 
     /// <summary>
     /// MIME types this importer supports
     /// </summary>
-    string[] SupportedMimeTypes { get; }
+    IReadOnlyList<string> SupportedMimeTypes { get; }
 
     /// <summary>
     /// Check if the importer can handle the specified file

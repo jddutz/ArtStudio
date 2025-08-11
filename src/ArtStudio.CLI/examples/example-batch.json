@@ -1,0 +1,61 @@
+[
+  {
+    "commandId": "create-document",
+    "description": "Create a new document for processing",
+    "parameters": {
+      "width": 1920,
+      "height": 1080,
+      "pixelFormat": "Rgba32"
+    },
+    "continueOnError": false
+  },
+  {
+    "commandId": "add-layer",
+    "description": "Add a new layer",
+    "parameters": {
+      "name": "Background",
+      "type": "Raster"
+    },
+    "continueOnError": false
+  },
+  {
+    "commandId": "fill-layer",
+    "description": "Fill layer with color",
+    "parameters": {
+      "color": "#FFFFFF",
+      "blendMode": "Normal"
+    },
+    "continueOnError": true
+  },
+  {
+    "commandId": "apply-filter",
+    "description": "Apply noise filter",
+    "parameters": {
+      "filter": "noise",
+      "intensity": 0.1,
+      "type": "gaussian"
+    },
+    "continueOnError": true,
+    "timeoutMs": 30000
+  },
+  {
+    "commandId": "save-document",
+    "description": "Save the processed document",
+    "parameters": {
+      "path": "output/example.artstudio",
+      "includeHistory": false
+    },
+    "continueOnError": false
+  },
+  {
+    "commandId": "export-image",
+    "description": "Export as PNG",
+    "parameters": {
+      "path": "output/example.png",
+      "format": "PNG",
+      "quality": 95,
+      "includeTransparency": true
+    },
+    "continueOnError": false
+  }
+]

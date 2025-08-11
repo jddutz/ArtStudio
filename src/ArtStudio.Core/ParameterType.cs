@@ -5,10 +5,10 @@ namespace ArtStudio.Core;
 /// </summary>
 public enum ParameterType
 {
-    Integer,
-    Float,
+    Number,
+    FloatingPoint,
     Boolean,
-    String,
+    Text,
     Color,
     Enum,
     Range,

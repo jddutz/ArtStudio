@@ -17,5 +17,5 @@ public class GenerationParameters
     public float GuidanceScale { get; set; } = 7.5f;
     public LayerData? InputImage { get; set; }
     public LayerData? MaskImage { get; set; }
-    public Dictionary<string, object> CustomParameters { get; set; } = new();
+    public Dictionary<string, object> CustomParameters { get; } = new();
 }

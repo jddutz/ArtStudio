@@ -3,229 +3,25 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:ArtStudio.WPF.Converters">
-    <Application.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <!-- Theme resources will be managed dynamically by ThemeManager -->
-            </ResourceDictionary.MergedDictionaries>
+        <Application.Resources>
+                <ResourceDictionary>
+                        <ResourceDictionary.MergedDictionaries>
+                                <!-- MaterialDesign base theme - this provides all the standard controls -->
+                                <materialDesign:BundledTheme BaseTheme="Dark"
+                                                             PrimaryColor="Blue"
+                                                             SecondaryColor="Lime"/>
 
-            <!-- Converters -->
-            <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                                <!-- MaterialDesign defaults - essential control templates -->
+                                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml"/>
 
-            <!-- Color/Brush Resources -->
-            <SolidColorBrush x:Key="ArtStudio.Background"
-                             Color="#FF2D2D30"/>
-            <SolidColorBrush x:Key="ArtStudio.Surface"
-                             Color="#FF3E3E42"/>
-            <SolidColorBrush x:Key="ArtStudio.OnBackground"
-                             Color="#FFFFFFFF"/>
-            <SolidColorBrush x:Key="ArtStudio.OnSurface"
-                             Color="#FFFFFFFF"/>
-            <SolidColorBrush x:Key="ArtStudio.OnSurfaceVariant"
-                             Color="#FFCCCCCC"/>
-            <SolidColorBrush x:Key="ArtStudio.Primary"
-                             Color="#FF007ACC"/>
-            <SolidColorBrush x:Key="ArtStudio.Border"
-                             Color="#FF5A5A5C"/>
-            <SolidColorBrush x:Key="ArtStudio.Grid"
-                             Color="#FF252526"/>
+                                <!-- ArtStudio customizations - override MaterialDesign colors and add custom styles -->
+                                <ResourceDictionary Source="Resources/Colors.xaml"/>
+                                <ResourceDictionary Source="Resources/Typography.xaml"/>
+                                <ResourceDictionary Source="Resources/Styles.xaml"/>
+                        </ResourceDictionary.MergedDictionaries>
 
-            <!-- Style Resources -->
-            <Style x:Key="ArtStudio.Menu"
-                   TargetType="Menu">
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.ToolBar"
-                   TargetType="ToolBar">
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="BorderThickness"
-                        Value="0,0,0,1"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.IconButton"
-                   TargetType="Button">
-                <Setter Property="Background"
-                        Value="Transparent"/>
-                <Setter Property="BorderThickness"
-                        Value="0"/>
-                <Setter Property="Padding"
-                        Value="4"/>
-                <Setter Property="Margin"
-                        Value="2"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.PaletteCard"
-                   TargetType="Control">
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="Margin"
-                        Value="4"/>
-                <Setter Property="Padding"
-                        Value="8"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.HeaderText"
-                   TargetType="TextBlock">
-                <Setter Property="FontSize"
-                        Value="16"/>
-                <Setter Property="FontWeight"
-                        Value="Bold"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-                <Setter Property="Margin"
-                        Value="0,0,0,8"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.SubheaderText"
-                   TargetType="TextBlock">
-                <Setter Property="FontSize"
-                        Value="12"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurfaceVariant}"/>
-                <Setter Property="Margin"
-                        Value="0,4,0,2"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.ToolButton"
-                   TargetType="Button">
-                <Setter Property="Background"
-                        Value="Transparent"/>
-                <Setter Property="BorderThickness"
-                        Value="1"/>
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="Padding"
-                        Value="8"/>
-                <Setter Property="Margin"
-                        Value="2"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.ToolGroup"
-                   TargetType="GroupBox">
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="Margin"
-                        Value="0,4"/>
-                <Setter Property="Padding"
-                        Value="4"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.ToolSlider"
-                   TargetType="Slider">
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.Primary}"/>
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="Margin"
-                        Value="4,2"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.LayerListBox"
-                   TargetType="ListBox">
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.LayerItem"
-                   TargetType="Border">
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="BorderThickness"
-                        Value="0,0,0,1"/>
-                <Setter Property="Padding"
-                        Value="4"/>
-                <Setter Property="Margin"
-                        Value="1"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.CanvasBorder"
-                   TargetType="Border">
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="BorderThickness"
-                        Value="1"/>
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Background}"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.DrawingCanvas"
-                   TargetType="Canvas">
-                <Setter Property="Background"
-                        Value="White"/>
-                <Setter Property="ClipToBounds"
-                        Value="True"/>
-            </Style>
-
-            <Style x:Key="ArtStudio.StatusBar"
-                   TargetType="StatusBar">
-                <Setter Property="Background"
-                        Value="{StaticResource ArtStudio.Surface}"/>
-                <Setter Property="BorderBrush"
-                        Value="{StaticResource ArtStudio.Border}"/>
-                <Setter Property="BorderThickness"
-                        Value="0,1,0,0"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-            </Style>
-
-            <!-- MaterialDesign fallback style -->
-            <Style x:Key="MaterialDesignFlatButton"
-                   TargetType="Button">
-                <Setter Property="Background"
-                        Value="Transparent"/>
-                <Setter Property="BorderThickness"
-                        Value="0"/>
-                <Setter Property="Padding"
-                        Value="8,4"/>
-                <Setter Property="Margin"
-                        Value="2"/>
-                <Setter Property="Foreground"
-                        Value="{StaticResource ArtStudio.OnSurface}"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver"
-                                         Value="True">
-                                    <Setter Property="Background"
-                                            Value="{StaticResource ArtStudio.Surface}"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed"
-                                         Value="True">
-                                    <Setter Property="Background"
-                                            Value="{StaticResource ArtStudio.Primary}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-        </ResourceDictionary>
-    </Application.Resources>
+                        <!-- Converters -->
+                        <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                </ResourceDictionary>
+        </Application.Resources>
 </Application>

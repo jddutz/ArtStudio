@@ -10,6 +10,25 @@ public class EditorService : IEditorService
 {
     private readonly ILogger<EditorService>? _logger;
 
+    // LoggerMessage delegates for high-performance logging
+    private static readonly Action<ILogger, Exception?> LogStartingDrawingOperation =
+        LoggerMessage.Define(LogLevel.Information, new EventId(1, nameof(StartDrawing)), "Starting drawing operation");
+
+    private static readonly Action<ILogger, Exception?> LogClearingCanvas =
+        LoggerMessage.Define(LogLevel.Information, new EventId(2, nameof(ClearCanvas)), "Clearing canvas");
+
+    private static readonly Action<ILogger, Exception?> LogCreatingNewDocument =
+        LoggerMessage.Define(LogLevel.Information, new EventId(3, nameof(CreateNewDocument)), "Creating new document");
+
+    private static readonly Action<ILogger, string, Exception?> LogOpeningDocument =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(4, nameof(OpenDocument)), "Opening document: {FilePath}");
+
+    private static readonly Action<ILogger, Exception?> LogSavingDocument =
+        LoggerMessage.Define(LogLevel.Information, new EventId(5, nameof(SaveDocument)), "Saving document");
+
+    private static readonly Action<ILogger, string, Exception?> LogSavingDocumentAs =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(6, nameof(SaveDocumentAs)), "Saving document as: {FilePath}");
+
     public EditorService(ILogger<EditorService>? logger = null)
     {
         _logger = logger;
@@ -20,7 +39,8 @@ public class EditorService : IEditorService
     /// </summary>
     public void StartDrawing()
     {
-        _logger?.LogInformation("Starting drawing operation");
+        if (_logger != null)
+            LogStartingDrawingOperation(_logger, null);
         // TODO: Implement drawing logic
     }
 
@@ -29,7 +49,8 @@ public class EditorService : IEditorService
     /// </summary>
     public void ClearCanvas()
     {
-        _logger?.LogInformation("Clearing canvas");
+        if (_logger != null)
+            LogClearingCanvas(_logger, null);
         // TODO: Implement canvas clearing
     }
 
@@ -43,7 +64,8 @@ public class EditorService : IEditorService
     /// </summary>
     public void CreateNewDocument()
     {
-        _logger?.LogInformation("Creating new document");
+        if (_logger != null)
+            LogCreatingNewDocument(_logger, null);
         // TODO: Implement new document creation
     }
 
@@ -52,7 +74,8 @@ public class EditorService : IEditorService
     /// </summary>
     public void OpenDocument(string filePath)
     {
-        _logger?.LogInformation("Opening document: {FilePath}", filePath);
+        if (_logger != null)
+            LogOpeningDocument(_logger, filePath, null);
         // TODO: Implement document opening
     }
 
@@ -61,7 +84,8 @@ public class EditorService : IEditorService
     /// </summary>
     public void SaveDocument()
     {
-        _logger?.LogInformation("Saving document");
+        if (_logger != null)
+            LogSavingDocument(_logger, null);
         // TODO: Implement document saving
     }
 
@@ -70,7 +94,8 @@ public class EditorService : IEditorService
     /// </summary>
     public void SaveDocumentAs(string filePath)
     {
-        _logger?.LogInformation("Saving document as: {FilePath}", filePath);
+        if (_logger != null)
+            LogSavingDocumentAs(_logger, filePath, null);
         // TODO: Implement save as functionality
     }
 }

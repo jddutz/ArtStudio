@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ArtStudio.Core;
 
@@ -11,5 +12,5 @@ public class PluginInstallResult
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
     public PluginMetadata? InstalledPlugin { get; set; }
-    public List<string> Warnings { get; set; } = new();
+    public Collection<string> Warnings { get; } = new();
 }

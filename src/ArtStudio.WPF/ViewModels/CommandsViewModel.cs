@@ -46,7 +46,7 @@ public class CommandsViewModel
     public IEnumerable<(string Shortcut, ICommand Command)> ShortcutCommands =>
         _commandRegistry.GetCommandsWithShortcuts()
             .Where(c => !string.IsNullOrWhiteSpace(c.KeyboardShortcut))
-            .Select(c => (c.KeyboardShortcut!, GetOrCreateWrapper(c)))
+            .Select(c => (c.KeyboardShortcut!, (ICommand)GetOrCreateWrapper(c)))
             .ToList();
 
     /// <summary>

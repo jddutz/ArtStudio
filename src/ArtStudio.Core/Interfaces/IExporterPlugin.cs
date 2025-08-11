@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,12 +14,12 @@ public interface IExporterPlugin : IPlugin
     /// <summary>
     /// File extensions this exporter supports
     /// </summary>
-    string[] SupportedExtensions { get; }
+    IReadOnlyList<string> SupportedExtensions { get; }
 
     /// <summary>
     /// MIME types this exporter supports
     /// </summary>
-    string[] SupportedMimeTypes { get; }
+    IReadOnlyList<string> SupportedMimeTypes { get; }
 
     /// <summary>
     /// Check if the exporter can handle the specified format

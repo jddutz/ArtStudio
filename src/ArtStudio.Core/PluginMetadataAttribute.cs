@@ -6,7 +6,7 @@ namespace ArtStudio.Core;
 /// Metadata attribute for plugin discovery
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class PluginMetadataAttribute : Attribute
+public sealed class PluginMetadataAttribute : Attribute
 {
     public string Id { get; }
     public string Name { get; }

@@ -8,7 +8,7 @@ namespace ArtStudio.Core;
 /// </summary>
 public class ImportMetadata
 {
-    public Dictionary<string, object> Properties { get; set; } = new();
+    public Dictionary<string, object> Properties { get; } = new();
     public string? ColorProfile { get; set; }
     public DateTime? CreatedDate { get; set; }
     public DateTime? ModifiedDate { get; set; }

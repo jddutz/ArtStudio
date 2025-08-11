@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ArtStudio.Core;
 
@@ -15,10 +16,10 @@ public class PluginMetadata
     public string Author { get; set; } = string.Empty;
     public string? Website { get; set; }
     public string? License { get; set; }
-    public Type[]? Dependencies { get; set; }
-    public string[]? SupportedFormats { get; set; }
+    public IReadOnlyList<Type>? Dependencies { get; set; }
+    public IReadOnlyList<string>? SupportedFormats { get; set; }
     public string FilePath { get; set; } = string.Empty;
     public DateTime LoadedDate { get; set; }
     public bool IsEnabled { get; set; }
-    public Dictionary<string, object> CustomProperties { get; set; } = new();
+    public Dictionary<string, object> CustomProperties { get; } = new();
 }

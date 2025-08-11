@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ArtStudio.Core;
 
@@ -8,6 +9,6 @@ namespace ArtStudio.Core;
 public class ValidationResult
 {
     public bool IsValid { get; set; }
-    public List<ValidationError> Errors { get; set; } = new();
-    public List<ValidationWarning> Warnings { get; set; } = new();
+    public Collection<ValidationError> Errors { get; } = new();
+    public Collection<ValidationWarning> Warnings { get; } = new();
 }

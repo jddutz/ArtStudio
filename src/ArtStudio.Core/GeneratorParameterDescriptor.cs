@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ArtStudio.Core;
 
 /// <summary>
@@ -12,9 +14,9 @@ public class GeneratorParameterDescriptor
     public object? DefaultValue { get; set; }
     public object? MinValue { get; set; }
     public object? MaxValue { get; set; }
-    public object[]? AllowedValues { get; set; }
+    public IReadOnlyList<object>? AllowedValues { get; set; }
     public string? Unit { get; set; }
-    public int DecimalPlaces { get; set; } = 0;
-    public bool IsRequired { get; set; } = false;
+    public int DecimalPlaces { get; set; }
+    public bool IsRequired { get; set; }
     public string? Group { get; set; }
 }

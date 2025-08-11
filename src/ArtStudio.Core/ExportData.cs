@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ArtStudio.Core;
 
@@ -10,6 +11,6 @@ public class ExportData
     public int Width { get; set; }
     public int Height { get; set; }
     public double Dpi { get; set; } = 96.0;
-    public List<ExportLayer> Layers { get; set; } = new();
-    public Dictionary<string, object> Properties { get; set; } = new();
+    public Collection<ExportLayer> Layers { get; } = new();
+    public Dictionary<string, object> Properties { get; } = new();
 }

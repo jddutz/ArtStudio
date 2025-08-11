@@ -12,15 +12,50 @@ namespace ArtStudio.Core.Services;
 /// </summary>
 public abstract class PluginCommandBase : IPluginCommand
 {
-    protected readonly ILogger? Logger;
+    private readonly ILogger? _logger;
     private bool _disposed;
+
+    protected ILogger? Logger => _logger;
+
+    // LoggerMessage delegates for high-performance logging
+    private static readonly Action<ILogger, string, Exception?> LogPreparingCommand =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1001, nameof(LogPreparingCommand)),
+            "Preparing command {CommandId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogMissingParameter =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(1002, nameof(LogMissingParameter)),
+            "Required parameter {ParameterName} is missing for command {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogExecutingCommand =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1003, nameof(LogExecutingCommand)),
+            "Executing command {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCommandSuccess =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1004, nameof(LogCommandSuccess)),
+            "Command {CommandId} executed successfully");
+
+    private static readonly Action<ILogger, string, string?, Exception?> LogCommandFailure =
+        LoggerMessage.Define<string, string?>(LogLevel.Warning, new EventId(1005, nameof(LogCommandFailure)),
+            "Command {CommandId} failed: {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCommandCancelled =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1006, nameof(LogCommandCancelled)),
+            "Command {CommandId} was cancelled");
+
+    private static readonly Action<ILogger, string, Exception?> LogCommandError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(1007, nameof(LogCommandError)),
+            "Unexpected error executing command {CommandId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogCleaningUpCommand =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1008, nameof(LogCleaningUpCommand)),
+            "Cleaning up command {CommandId}");
 
     /// <summary>
     /// Initialize the command with optional logger
     /// </summary>
     protected PluginCommandBase(ILogger? logger = null)
     {
-        Logger = logger;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -71,7 +106,8 @@ public abstract class PluginCommandBase : IPluginCommand
     public virtual Task PrepareAsync(ICommandContext context, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        Logger?.LogDebug("Preparing command {CommandId}", CommandId);
+        if (Logger != null)
+            LogPreparingCommand(Logger, CommandId, null);
         return Task.CompletedTask;
     }
 
@@ -87,8 +123,8 @@ public abstract class PluginCommandBase : IPluginCommand
             {
                 if (param.IsRequired && !parameters.ContainsKey(param.Name))
                 {
-                    Logger?.LogWarning("Required parameter {ParameterName} is missing for command {CommandId}",
-                        param.Name, CommandId);
+                    if (Logger != null)
+                        LogMissingParameter(Logger, param.Name, CommandId, null);
                     return false;
                 }
             }
@@ -122,32 +158,39 @@ public abstract class PluginCommandBase : IPluginCommand
             // Normalize parameters with defaults
             var normalizedParameters = NormalizeParameters(parameters);
 
-            Logger?.LogInformation("Executing command {CommandId}", CommandId);
+            if (Logger != null)
+                LogExecutingCommand(Logger, CommandId, null);
 
             // Execute the command
-            var result = await OnExecuteAsync(context, normalizedParameters, cancellationToken);
+            var result = await OnExecuteAsync(context, normalizedParameters, cancellationToken).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                Logger?.LogInformation("Command {CommandId} executed successfully", CommandId);
+                if (Logger != null)
+                    LogCommandSuccess(Logger, CommandId, null);
             }
             else
             {
-                Logger?.LogWarning("Command {CommandId} failed: {Message}", CommandId, result.Message);
+                if (Logger != null)
+                    LogCommandFailure(Logger, CommandId, result.Message, null);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            Logger?.LogInformation("Command {CommandId} was cancelled", CommandId);
+            if (Logger != null)
+                LogCommandCancelled(Logger, CommandId, null);
             return CommandResult.Failure("Command was cancelled");
         }
+#pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Unexpected error executing command {CommandId}", CommandId);
+            if (Logger != null)
+                LogCommandError(Logger, CommandId, ex);
             return CommandResult.Failure($"Unexpected error: {ex.Message}", ex);
         }
+#pragma warning restore CA1031 // Do not catch general exception types
     }
 
     /// <summary>
@@ -159,7 +202,8 @@ public abstract class PluginCommandBase : IPluginCommand
     public virtual Task CleanupAsync(ICommandContext context, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        Logger?.LogDebug("Cleaning up command {CommandId}", CommandId);
+        if (Logger != null)
+            LogCleaningUpCommand(Logger, CommandId, null);
         return Task.CompletedTask;
     }
 
@@ -225,8 +269,10 @@ public abstract class PluginCommandBase : IPluginCommand
     /// <summary>
     /// Get a typed parameter value
     /// </summary>
-    protected T? GetParameter<T>(IDictionary<string, object> parameters, string name, T? defaultValue = default)
+    protected static T? GetParameter<T>(IDictionary<string, object> parameters, string name, T? defaultValue = default)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+
         if (parameters.TryGetValue(name, out var value) && value is T typedValue)
         {
             return typedValue;
@@ -237,8 +283,10 @@ public abstract class PluginCommandBase : IPluginCommand
     /// <summary>
     /// Report progress for long-running operations
     /// </summary>
-    protected void ReportProgress(ICommandContext context, int percentage, string? description = null, bool isCancellable = true)
+    protected static void ReportProgress(ICommandContext context, int percentage, string? description = null, bool isCancellable = true)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         context.Progress?.Report(new CommandProgress
         {
             Percentage = percentage,
@@ -250,7 +298,7 @@ public abstract class PluginCommandBase : IPluginCommand
     /// <summary>
     /// Check if the operation was cancelled
     /// </summary>
-    protected void ThrowIfCancelled(CancellationToken cancellationToken)
+    protected static void ThrowIfCancelled(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
     }
@@ -260,10 +308,7 @@ public abstract class PluginCommandBase : IPluginCommand
     /// </summary>
     protected void ThrowIfDisposed()
     {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(GetType().Name);
-        }
+        ObjectDisposedException.ThrowIf(_disposed, GetType());
     }
 
     /// <inheritdoc />

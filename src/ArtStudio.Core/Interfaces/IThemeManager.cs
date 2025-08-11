@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ArtStudio.Core;
 
 /// <summary>
@@ -18,7 +20,7 @@ public interface IThemeManager
     /// <summary>
     /// Gets all available theme names
     /// </summary>
-    string[] AvailableThemes { get; }
+    IReadOnlyList<string> AvailableThemes { get; }
 
     /// <summary>
     /// Applies a theme by name

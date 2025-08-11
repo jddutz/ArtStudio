@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ArtStudio.Core;
 
@@ -13,5 +14,5 @@ public class ToolMenuItem
     public object? CommandParameter { get; set; }
     public string? IconResource { get; set; }
     public bool IsSeparator { get; set; }
-    public List<ToolMenuItem>? SubItems { get; set; }
+    public Collection<ToolMenuItem>? SubItems { get; } = new();
 }
