@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows.Input;
 using ArtStudio.Core;
 using ArtStudio.Core.Services;
+using ArtStudio.Core.Commands;
 using ArtStudio.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -131,12 +132,10 @@ public class CommandsViewModel
     /// </summary>
     private CommandContext CreateCommandContext()
     {
-        var editorService = _serviceProvider.GetRequiredService<IEditorService>();
         var configManager = _serviceProvider.GetRequiredService<IConfigurationManager>();
 
         return new CommandContext(
             _serviceProvider,
-            editorService,
             configManager,
             CommandExecutionMode.Interactive
         );

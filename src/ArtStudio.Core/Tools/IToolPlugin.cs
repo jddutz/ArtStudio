@@ -43,30 +43,6 @@ public interface IToolPlugin : IPlugin
     /// </summary>
     void Deactivate();
 
-    /// <summary>
-    /// Handle mouse/stylus down event
-    /// </summary>
-    void OnPointerDown(PointerEventArgs e);
-
-    /// <summary>
-    /// Handle mouse/stylus move event
-    /// </summary>
-    void OnPointerMove(PointerEventArgs e);
-
-    /// <summary>
-    /// Handle mouse/stylus up event
-    /// </summary>
-    void OnPointerUp(PointerEventArgs e);
-
-    /// <summary>
-    /// Handle key down event
-    /// </summary>
-    void OnKeyDown(KeyEventArgs e);
-
-    /// <summary>
-    /// Handle key up event
-    /// </summary>
-    void OnKeyUp(KeyEventArgs e);
 
     /// <summary>
     /// Get tool-specific context menu items

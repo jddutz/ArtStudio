@@ -112,10 +112,6 @@ public interface ICommandContext
     /// </summary>
     IServiceProvider ServiceProvider { get; }
 
-    /// <summary>
-    /// Editor service for document operations
-    /// </summary>
-    IEditorService EditorService { get; }
 
     /// <summary>
     /// Configuration manager
@@ -136,6 +132,7 @@ public interface ICommandContext
     /// Additional context data
     /// </summary>
     IDictionary<string, object> Data { get; }
+
 }
 
 /// <summary>

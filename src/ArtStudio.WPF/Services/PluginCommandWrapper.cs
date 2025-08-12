@@ -236,7 +236,6 @@ internal sealed class ProgressCommandContext : ICommandContext
     }
 
     public IServiceProvider ServiceProvider => _baseContext.ServiceProvider;
-    public IEditorService EditorService => _baseContext.EditorService;
     public IConfigurationManager ConfigurationManager => _baseContext.ConfigurationManager;
     public CommandExecutionMode ExecutionMode => _baseContext.ExecutionMode;
     public IProgress<CommandProgress>? Progress { get; }

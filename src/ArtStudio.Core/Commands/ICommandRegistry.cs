@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ArtStudio.Core;
+namespace ArtStudio.Core.Commands;
 
 /// <summary>
 /// Interface for managing plugin commands

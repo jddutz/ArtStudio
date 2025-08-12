@@ -41,7 +41,6 @@ public static class ServiceConfiguration
         services.AddSingleton<IWorkspaceLayoutManager, WorkspaceLayoutManager>();
 
         // Application services (singletons)
-        services.AddSingleton<IEditorService, EditorService>();
         services.AddSingleton<DockingService>();
 
         // ViewModels (transient - new instance each time)

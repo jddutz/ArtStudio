@@ -1,6 +1,6 @@
 using System;
 
-namespace ArtStudio.Core;
+namespace ArtStudio.Core.Commands;
 
 /// <summary>
 /// Event arguments for command unregistration

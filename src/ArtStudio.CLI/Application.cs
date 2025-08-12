@@ -7,10 +7,10 @@ namespace ArtStudio.CLI;
 /// <summary>
 /// Main CLI application coordinator
 /// </summary>
-public class CliApplication
+public class Application
 {
     private readonly RootCommandBuilder _rootCommandBuilder;
-    private readonly ILogger<CliApplication> _logger;
+    private readonly ILogger<Application> _logger;
 
     // LoggerMessage delegates for high-performance logging
     private static readonly Action<ILogger, int, Exception?> LogApplicationStarting =
@@ -28,9 +28,9 @@ public class CliApplication
     /// <summary>
     /// Initialize the CLI application
     /// </summary>
-    public CliApplication(
+    public Application(
         RootCommandBuilder rootCommandBuilder,
-        ILogger<CliApplication> logger)
+        ILogger<Application> logger)
     {
         _rootCommandBuilder = rootCommandBuilder ?? throw new ArgumentNullException(nameof(rootCommandBuilder));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

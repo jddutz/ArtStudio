@@ -12,8 +12,6 @@ public class CommandContext : ICommandContext
     /// <inheritdoc />
     public IServiceProvider ServiceProvider { get; }
 
-    /// <inheritdoc />
-    public IEditorService EditorService { get; }
 
     /// <inheritdoc />
     public IConfigurationManager ConfigurationManager { get; }
@@ -32,14 +30,12 @@ public class CommandContext : ICommandContext
     /// </summary>
     public CommandContext(
         IServiceProvider serviceProvider,
-        IEditorService editorService,
         IConfigurationManager configurationManager,
         CommandExecutionMode executionMode = CommandExecutionMode.Interactive,
         IProgress<CommandProgress>? progress = null,
         IDictionary<string, object>? data = null)
     {
         ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        EditorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
         ConfigurationManager = configurationManager ?? throw new ArgumentNullException(nameof(configurationManager));
         ExecutionMode = executionMode;
         Progress = progress;

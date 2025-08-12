@@ -1,6 +1,7 @@
 using System.CommandLine;
 using ArtStudio.CLI.Services;
 using ArtStudio.Core;
+using ArtStudio.Core.Commands;
 
 namespace ArtStudio.CLI.Commands;
 

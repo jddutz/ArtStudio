@@ -9,7 +9,6 @@ namespace ArtStudio.WPF.ViewModels;
 public class MainViewModel : INotifyPropertyChanged
 {
     private readonly IWorkspaceManager _workspaceManager;
-    private readonly IEditorService _editorService;
     private readonly ILogger<MainViewModel>? _logger;
     private readonly IConfigurationManager? _configurationManager;
     private readonly IThemeManager? _themeManager;
@@ -30,7 +29,6 @@ public class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel(
         IWorkspaceManager workspaceManager,
-        IEditorService editorService,
         ILogger<MainViewModel>? logger,
         ToolPaletteViewModel toolPaletteViewModel,
         LayerPaletteViewModel layerPaletteViewModel,
@@ -40,7 +38,6 @@ public class MainViewModel : INotifyPropertyChanged
         WorkspaceViewModel? workspaceViewModel = null)
     {
         _workspaceManager = workspaceManager ?? throw new ArgumentNullException(nameof(workspaceManager));
-        _editorService = editorService;
         _logger = logger;
         _configurationManager = configurationManager;
         _themeManager = themeManager;

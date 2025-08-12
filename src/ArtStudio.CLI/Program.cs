@@ -33,7 +33,7 @@ internal sealed partial class Program
 
         try
         {
-            var cliApp = host.Services.GetRequiredService<CliApplication>();
+            var cliApp = host.Services.GetRequiredService<Application>();
             return await cliApp.RunAsync(args).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // Do not catch general exception types - appropriate for top-level error handling
@@ -57,12 +57,11 @@ internal sealed partial class Program
     private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
         // Core services
-        services.AddSingleton<ICommandRegistry, CommandRegistry>();
+        services.AddSingleton<ArtStudio.Core.Commands.ICommandRegistry, ArtStudio.Core.Services.CommandRegistry>();
         services.AddSingleton<IConfigurationManager, ConfigurationManager>();
-        services.AddSingleton<IEditorService, HeadlessEditorService>();
 
         // CLI-specific services
-        services.AddSingleton<CliApplication>();
+        services.AddSingleton<Application>();
         services.AddSingleton<CommandExecutor>();
         services.AddSingleton<BatchProcessor>();
         services.AddSingleton<ArgumentParser>();

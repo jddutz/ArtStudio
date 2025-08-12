@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+using ArtStudio.Core.Commands;
 namespace ArtStudio.Core;
 
 /// <summary>

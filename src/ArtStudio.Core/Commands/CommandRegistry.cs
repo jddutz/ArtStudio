@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using ArtStudio.Core;
+using ArtStudio.Core.Commands;
 using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.Core.Services;

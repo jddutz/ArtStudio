@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ArtStudio.Core;
 using ArtStudio.Core.Services;
+using ArtStudio.Core.Commands;
 using Microsoft.Extensions.Logging;
 
 namespace ArtStudio.CLI.Services;
@@ -14,7 +15,6 @@ public class CommandExecutor
 {
     private readonly ICommandRegistry _commandRegistry;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IEditorService _editorService;
     private readonly IConfigurationManager _configurationManager;
     private readonly ILogger<CommandExecutor> _logger;
 
@@ -49,13 +49,11 @@ public class CommandExecutor
     public CommandExecutor(
         ICommandRegistry commandRegistry,
         IServiceProvider serviceProvider,
-        IEditorService editorService,
         IConfigurationManager configurationManager,
         ILogger<CommandExecutor> logger)
     {
         _commandRegistry = commandRegistry ?? throw new ArgumentNullException(nameof(commandRegistry));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _editorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
         _configurationManager = configurationManager ?? throw new ArgumentNullException(nameof(configurationManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -127,7 +125,6 @@ public class CommandExecutor
     {
         return new CommandContext(
             _serviceProvider,
-            _editorService,
             _configurationManager,
             CommandExecutionMode.CommandLine,
             null, // No progress reporting in CLI mode

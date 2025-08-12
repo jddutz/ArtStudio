@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using ArtStudio.Core;
+using ArtStudio.Core.Commands;
 
 namespace ArtStudio.CLI.Services;
 
